@@ -1,0 +1,63 @@
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.settings-card {
+  background-color: var(--admin-surface);
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.settings-card-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--admin-border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background-color: var(--admin-card);
+}
+
+.card-header-icon {
+  color: var(--admin-accent);
+}
+
+.card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--admin-text);
+}
+
+.card-desc {
+  font-size: 0.8rem;
+  color: var(--admin-muted);
+  margin-top: 2px;
+}
+
+.settings-card-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.field-hint {
+  font-size: 0.75rem;
+  color: var(--admin-muted);
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 0 40px;
+}
