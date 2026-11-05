@@ -1,5 +1,7 @@
 package com.melodick.recs.service;
 
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.melodick.recs.exception.BadRequestException;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,6 +14,7 @@ import java.io.InputStream;
 import java.nio.file.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -24,6 +27,15 @@ public class FileStorageService {
             "image/webp",
             "image/gif"
     );
+
+    @Value("${app.cloudinary.cloud-name:}")
+    private String cloudName;
+
+    @Value("${app.cloudinary.api-key:}")
+    private String apiKey;
+
+    @Value("${app.cloudinary.api-secret:}")
+    private String apiSecret;
 
     public FileStorageService(@Value("${app.upload.dir:./uploads}") String uploadDir) {
         this.rootLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
@@ -49,6 +61,36 @@ public class FileStorageService {
             throw new BadRequestException("Định dạng file không hợp lệ. Chỉ chấp nhận JPG, PNG, WEBP, GIF.");
         }
 
+        // If Cloudinary credentials are provided, upload to Cloudinary CDN
+        if (StringUtils.hasText(cloudName) && StringUtils.hasText(apiKey) && StringUtils.hasText(apiSecret)) {
+            return uploadToCloudinary(file);
+        }
+
+        // Otherwise fallback to local disk storage
+        return uploadToLocalDisk(file);
+    }
+
+    private String uploadToCloudinary(MultipartFile file) {
+        try {
+            Cloudinary cloudinary = new Cloudinary(ObjectUtils.asMap(
+                    "cloud_name", cloudName,
+                    "api_key", apiKey,
+                    "api_secret", apiSecret,
+                    "secure", true
+            ));
+
+            Map<?, ?> uploadResult = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.asMap(
+                    "folder", "melodick/artists",
+                    "resource_type", "image"
+            ));
+
+            return (String) uploadResult.get("secure_url");
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi khi tải ảnh lên Cloudinary: " + e.getMessage(), e);
+        }
+    }
+
+    private String uploadToLocalDisk(MultipartFile file) {
         String originalFilename = StringUtils.cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "");
         String extension = "";
         int extIndex = originalFilename.lastIndexOf('.');
@@ -70,4 +112,5 @@ public class FileStorageService {
         return "/uploads/artists/" + uniqueFilename;
     }
 }
+
 
