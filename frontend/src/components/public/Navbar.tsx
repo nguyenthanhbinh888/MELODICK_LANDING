@@ -16,7 +16,7 @@ export const Navbar: React.FC = () => {
     <header className="public-header">
       <nav className="public-nav">
         <Link to="/" className="nav-brand" onClick={closeMenu}>
-          <img src="/logo.png" alt={brandName} className="nav-logo-img" />
+          {brandName}
         </Link>
 
         {/* Desktop Links */}

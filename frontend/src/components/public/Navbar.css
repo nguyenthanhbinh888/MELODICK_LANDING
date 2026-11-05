@@ -18,24 +18,13 @@
 }
 
 .nav-brand {
-  display: flex;
-  align-items: center;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: -0.5px;
   text-decoration: none;
   cursor: pointer;
   user-select: none;
-}
-
-.nav-logo-img {
-  height: 36px;
-  width: auto;
-  object-fit: contain;
-  display: block;
-  transition: transform 0.25s ease, opacity 0.25s ease;
-}
-
-.nav-logo-img:hover {
-  transform: scale(1.04);
-  opacity: 0.95;
 }
 
 .nav-links {
