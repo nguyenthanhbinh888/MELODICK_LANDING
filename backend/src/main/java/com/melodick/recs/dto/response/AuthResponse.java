@@ -17,3 +17,4 @@ public class AuthResponse {
     public AdminUserResponse getUser() { return user; }
     public void setUser(AdminUserResponse user) { this.user = user; }
 }
+

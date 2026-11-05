@@ -42,3 +42,4 @@ INSERT INTO artist_links (artist_id, platform, url, display_order) VALUES
 INSERT INTO admin_users (id, username, password_hash, display_name, active) VALUES
 (1, 'admin', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 'Super Admin', TRUE)
 ON DUPLICATE KEY UPDATE username=username;
+

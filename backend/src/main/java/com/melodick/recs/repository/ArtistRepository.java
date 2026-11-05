@@ -22,3 +22,4 @@ public interface ArtistRepository extends JpaRepository<Artist, Long> {
 
     long countByPublished(boolean published);
 }
+

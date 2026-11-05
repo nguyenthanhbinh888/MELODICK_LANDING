@@ -55,3 +55,4 @@ public class AdminUserDetails implements UserDetails {
         return adminUser.isActive();
     }
 }
+

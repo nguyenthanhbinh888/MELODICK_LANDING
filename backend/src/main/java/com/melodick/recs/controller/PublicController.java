@@ -30,3 +30,4 @@ public class PublicController {
         return ResponseEntity.ok(publicService.getPublishedArtists());
     }
 }
+

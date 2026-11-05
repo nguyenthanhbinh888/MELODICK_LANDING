@@ -10,3 +10,4 @@ public class MelodickRecsApplication {
         SpringApplication.run(MelodickRecsApplication.class, args);
     }
 }
+

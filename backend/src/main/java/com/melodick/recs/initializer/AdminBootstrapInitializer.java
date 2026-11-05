@@ -53,3 +53,4 @@ public class AdminBootstrapInitializer implements CommandLineRunner {
         );
     }
 }
+

@@ -22,3 +22,4 @@ public class DashboardStatsResponse {
     public long getHiddenArtists() { return hiddenArtists; }
     public void setHiddenArtists(long hiddenArtists) { this.hiddenArtists = hiddenArtists; }
 }
+

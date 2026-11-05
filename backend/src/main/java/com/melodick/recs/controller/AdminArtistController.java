@@ -43,7 +43,7 @@ public class AdminArtistController {
         return ResponseEntity.ok(artistService.updateArtist(id, request));
     }
 
-    @PATCH("/{id}/visibility")
+    @PatchMapping("/{id}/visibility")
     public ResponseEntity<ArtistResponse> toggleVisibility(@PathVariable Long id) {
         return ResponseEntity.ok(artistService.toggleVisibility(id));
     }
@@ -60,3 +60,4 @@ public class AdminArtistController {
         return ResponseEntity.ok(ApiResponse.ok("Đã cập nhật thứ tự hiển thị thành công"));
     }
 }
+

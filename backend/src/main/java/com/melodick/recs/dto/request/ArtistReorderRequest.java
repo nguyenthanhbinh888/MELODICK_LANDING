@@ -35,3 +35,4 @@ public class ArtistReorderRequest {
     public List<OrderItem> getOrders() { return orders; }
     public void setOrders(List<OrderItem> orders) { this.orders = orders; }
 }
+

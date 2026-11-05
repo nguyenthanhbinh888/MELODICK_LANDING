@@ -19,3 +19,4 @@ export const CursorGlow: React.FC = () => {
 
   return <div id="cursor-glow" ref={glowRef} aria-hidden="true" />;
 };
+

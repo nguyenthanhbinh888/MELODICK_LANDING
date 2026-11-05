@@ -163,3 +163,4 @@ export const ArtistsPage: React.FC = () => {
     </section>
   );
 };
+

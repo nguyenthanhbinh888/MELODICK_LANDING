@@ -61,3 +61,4 @@ export const SiteSettingsProvider: React.FC<{ children: React.ReactNode }> = ({ 
 };
 
 export const useSiteSettings = () => useContext(SiteSettingsContext);
+

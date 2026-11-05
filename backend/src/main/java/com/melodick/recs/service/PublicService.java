@@ -36,3 +36,4 @@ public class PublicService {
         return artists.stream().map(artistService::mapToResponse).collect(Collectors.toList());
     }
 }
+

@@ -519,3 +519,4 @@ export const AdminArtistsPage: React.FC = () => {
     </div>
   );
 };
+

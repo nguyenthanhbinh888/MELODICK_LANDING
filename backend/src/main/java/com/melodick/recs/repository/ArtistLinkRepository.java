@@ -10,3 +10,4 @@ import java.util.List;
 public interface ArtistLinkRepository extends JpaRepository<ArtistLink, Long> {
     List<ArtistLink> findByArtistIdOrderByDisplayOrderAsc(Long artistId);
 }
+

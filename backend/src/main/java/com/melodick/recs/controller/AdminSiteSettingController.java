@@ -26,3 +26,4 @@ public class AdminSiteSettingController {
         return ResponseEntity.ok(siteSettingService.updateSettings(settings));
     }
 }
+

@@ -36,3 +36,4 @@ public class ArtistLinkDto {
     public int getDisplayOrder() { return displayOrder; }
     public void setDisplayOrder(int displayOrder) { this.displayOrder = displayOrder; }
 }
+

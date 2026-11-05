@@ -23,3 +23,4 @@ public class DashboardService {
         return new DashboardStatsResponse(total, published, hidden);
     }
 }
+

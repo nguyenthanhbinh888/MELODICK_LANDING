@@ -48,3 +48,4 @@ public class SiteSettingService {
         return getAllSettingsAsMap();
     }
 }
+

@@ -155,3 +155,4 @@ public class ArtistService {
                 .replaceAll("\\s+", "-");
     }
 }
+

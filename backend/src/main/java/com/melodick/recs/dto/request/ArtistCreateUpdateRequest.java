@@ -52,3 +52,4 @@ public class ArtistCreateUpdateRequest {
     public List<ArtistLinkDto> getLinks() { return links; }
     public void setLinks(List<ArtistLinkDto> links) { this.links = links; }
 }
+
