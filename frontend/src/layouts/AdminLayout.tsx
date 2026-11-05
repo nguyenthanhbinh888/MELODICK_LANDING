@@ -56,8 +56,8 @@ export const AdminLayout: React.FC = () => {
       {/* Sidebar */}
       <aside className={`admin-sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
         <div className="sidebar-brand">
+          <img src="/logo.png" alt="MELODICK RECS." className="sidebar-logo-img" />
           <span className="brand-badge">CMS</span>
-          <span className="brand-name">MELODICK RECS.</span>
         </div>
 
         <nav className="sidebar-nav">
