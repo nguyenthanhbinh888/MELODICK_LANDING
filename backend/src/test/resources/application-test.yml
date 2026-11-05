@@ -20,3 +20,4 @@ app:
     default-password: Admin@123456
   cors:
     allowed-origins: http://localhost:5173
+
