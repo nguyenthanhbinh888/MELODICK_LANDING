@@ -13,11 +13,14 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Security: run application as dedicated non-root user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-USER appuser
+# Security: configure dedicated non-root user and pre-create writable upload directory
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup \
+    && mkdir -p /app/uploads/artists \
+    && chown -R appuser:appgroup /app
 
-COPY --from=builder /app/target/melodick-recs-backend-1.0.0.jar app.jar
+COPY --chown=appuser:appgroup --from=builder /app/target/melodick-recs-backend-1.0.0.jar app.jar
+
+USER appuser
 
 # Dynamic port binding from Render environment ($PORT)
 ENV PORT=10000
