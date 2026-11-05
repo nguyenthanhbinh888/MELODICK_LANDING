@@ -32,13 +32,12 @@ public class AdminBootstrapInitializer implements CommandLineRunner {
     public void run(String... args) {
         adminUserRepository.findByUsername(defaultUsername).ifPresentOrElse(
                 admin -> {
-                    // If the existing password hash is not BCrypt or needs initialization from env
-                    if (!admin.getPasswordHash().startsWith("$2a$") && !admin.getPasswordHash().startsWith("$2b$")) {
+                    if (!passwordEncoder.matches(defaultPassword, admin.getPasswordHash())) {
                         admin.setPasswordHash(passwordEncoder.encode(defaultPassword));
                         adminUserRepository.save(admin);
-                        logger.info("Admin user [{}] password re-encoded with BCrypt.", defaultUsername);
+                        logger.info("Admin user [{}] password successfully synced with default configuration.", defaultUsername);
                     } else {
-                        logger.info("Admin user [{}] is verified and ready.", defaultUsername);
+                        logger.info("Admin user [{}] credentials verified and ready.", defaultUsername);
                     }
                 },
                 () -> {

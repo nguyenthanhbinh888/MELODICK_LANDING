@@ -40,6 +40,6 @@ INSERT INTO artist_links (artist_id, platform, url, display_order) VALUES
 -- Initial Admin Account (username: admin, default password hash for Admin@123456)
 -- Managed and updated dynamically at startup by AdminBootstrapInitializer
 INSERT INTO admin_users (id, username, password_hash, display_name, active) VALUES
-(1, 'admin', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 'Super Admin', TRUE)
+(1, 'admin', '$2a$10$F0wZ0e8NatHl4//iKrzkL.Ri45AMLpaN6ZL6kmPaTFy8wthccUmRq', 'Super Admin', TRUE)
 ON DUPLICATE KEY UPDATE username=username;
 
