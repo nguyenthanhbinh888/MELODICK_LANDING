@@ -48,6 +48,24 @@ class SecurityAndPublicApiIntegrationTest {
     }
 
     @Test
+    void rootHealth_ReturnsOk() throws Exception {
+        mockMvc.perform(get("/"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void healthEndpoint_ReturnsOk() throws Exception {
+        mockMvc.perform(get("/health"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void actuatorHealth_ReturnsOk() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void publicArtists_PermitAll_ReturnsOk() throws Exception {
         when(publicService.getPublishedArtists()).thenReturn(Collections.emptyList());
 
