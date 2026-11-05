@@ -45,9 +45,15 @@ public class FileStorageService {
     public void init() {
         try {
             Path artistsDir = rootLocation.resolve("artists");
-            Files.createDirectories(artistsDir);
-        } catch (IOException e) {
-            throw new RuntimeException("Không thể khởi tạo thư mục lưu trữ file ảnh tải lên", e);
+            if (!Files.exists(artistsDir)) {
+                Files.createDirectories(artistsDir);
+            }
+        } catch (Exception e) {
+            // Non-fatal if Cloudinary is configured as primary storage
+            if (StringUtils.hasText(cloudName) && StringUtils.hasText(apiKey) && StringUtils.hasText(apiSecret)) {
+                return;
+            }
+            throw new RuntimeException("Không thể khởi tạo thư mục lưu trữ file ảnh tải lên: " + e.getMessage(), e);
         }
     }
 
@@ -101,7 +107,16 @@ public class FileStorageService {
         }
 
         String uniqueFilename = UUID.randomUUID().toString() + extension;
-        Path targetLocation = rootLocation.resolve("artists").resolve(uniqueFilename);
+        Path artistsDir = rootLocation.resolve("artists");
+        try {
+            if (!Files.exists(artistsDir)) {
+                Files.createDirectories(artistsDir);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Không thể tạo thư mục lưu trữ ảnh: " + e.getMessage(), e);
+        }
+
+        Path targetLocation = artistsDir.resolve(uniqueFilename);
 
         try (InputStream inputStream = file.getInputStream()) {
             Files.copy(inputStream, targetLocation, StandardCopyOption.REPLACE_EXISTING);
