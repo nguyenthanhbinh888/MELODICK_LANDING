@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "melodickrecs",
   "main": "worker.js",
-  "compatibility_date": "2026-11-05",
+  "compatibility_date": "2024-09-23",
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
