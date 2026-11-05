@@ -91,11 +91,12 @@
   left: 14px;
   color: var(--admin-muted);
   pointer-events: none;
+  z-index: 2;
 }
 
-.input-with-icon input {
+.admin-login-wrapper .input-with-icon .admin-login-input {
   width: 100%;
-  padding: 12px 14px 12px 42px;
+  padding: 12px 14px 12px 46px !important;
   background-color: var(--admin-card);
   border: 1px solid var(--admin-border);
   border-radius: 8px;
@@ -105,12 +106,12 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.input-with-icon input:focus {
+.admin-login-wrapper .input-with-icon .admin-login-input:focus {
   border-color: var(--admin-accent);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
-.input-with-icon input:disabled {
+.admin-login-wrapper .input-with-icon .admin-login-input:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

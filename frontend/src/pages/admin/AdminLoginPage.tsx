@@ -67,6 +67,7 @@ export const AdminLoginPage: React.FC = () => {
               <input
                 id="username"
                 type="text"
+                className="admin-login-input"
                 autoComplete="username"
                 placeholder="Nhập username"
                 value={username}
@@ -84,6 +85,7 @@ export const AdminLoginPage: React.FC = () => {
               <input
                 id="password"
                 type="password"
+                className="admin-login-input"
                 autoComplete="current-password"
                 placeholder="Nhập password"
                 value={password}

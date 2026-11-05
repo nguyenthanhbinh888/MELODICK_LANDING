@@ -348,15 +348,15 @@
   gap: 8px;
 }
 
-.form-group label {
+.modal-card .form-group label {
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--admin-text);
 }
 
-.form-group input,
-.form-group textarea,
-.form-group select {
+.modal-card .form-group input,
+.modal-card .form-group textarea,
+.modal-card .form-group select {
   padding: 10px 14px;
   background-color: var(--admin-card);
   border: 1px solid var(--admin-border);
@@ -367,9 +367,9 @@
   font-family: inherit;
 }
 
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
+.modal-card .form-group input:focus,
+.modal-card .form-group textarea:focus,
+.modal-card .form-group select:focus {
   border-color: var(--admin-accent);
 }
 
