@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import {
   Plus,
   Search,
@@ -12,9 +12,11 @@ import {
   AlertCircle,
   CheckCircle,
   Loader2,
+  Upload,
+  Link as LinkIcon,
 } from 'lucide-react';
 import type { Artist, ArtistInput } from '../../types';
-import { adminArtistsApi } from '../../services/api';
+import { adminArtistsApi, adminUploadApi } from '../../services/api';
 import './AdminArtistsPage.css';
 
 const PLATFORM_OPTIONS = [
@@ -37,6 +39,11 @@ export const AdminArtistsPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingArtistId, setEditingArtistId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // File upload state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [showUrlInput, setShowUrlInput] = useState(false);
 
   // Delete modal state
   const [deletingArtist, setDeletingArtist] = useState<Artist | null>(null);
@@ -75,8 +82,49 @@ export const AdminArtistsPage: React.FC = () => {
     setTimeout(() => setMessage(null), 4000);
   };
 
+  const handleTriggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showNotification('error', 'Vui lòng chọn định dạng ảnh hợp lệ (PNG, JPG, WEBP, GIF)');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      showNotification('error', 'Kích thước file ảnh vượt quá giới hạn 10MB');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const res = await adminUploadApi.uploadImage(file);
+      setFormData((prev) => ({ ...prev, imageUrl: res.url }));
+      showNotification('success', 'Đã tải ảnh lên thành công!');
+    } catch (err: unknown) {
+      showNotification(
+        'error',
+        err instanceof Error ? err.message : 'Tải ảnh lên thất bại. Vui lòng thử lại.'
+      );
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData((prev) => ({ ...prev, imageUrl: '' }));
+  };
+
   const handleOpenAddModal = () => {
     setEditingArtistId(null);
+    setShowUrlInput(false);
     setFormData({
       name: '',
       imageUrl: '',
@@ -94,6 +142,7 @@ export const AdminArtistsPage: React.FC = () => {
 
   const handleOpenEditModal = (artist: Artist) => {
     setEditingArtistId(artist.id);
+    setShowUrlInput(Boolean(artist.imageUrl && artist.imageUrl.startsWith('http')));
     setFormData({
       name: artist.name,
       slug: artist.slug || '',
@@ -114,6 +163,8 @@ export const AdminArtistsPage: React.FC = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingArtistId(null);
+    setShowUrlInput(false);
+    setIsUploading(false);
   };
 
   const handleAddLink = () => {
@@ -377,28 +428,111 @@ export const AdminArtistsPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="artist-image">URL Ảnh đại diện</label>
+              <div className="form-group image-upload-group">
+                <label>Ảnh đại diện nghệ sĩ</label>
                 <input
-                  id="artist-image"
-                  type="url"
-                  placeholder="https://example.com/artist.jpg"
-                  value={formData.imageUrl || ''}
-                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+                  style={{ display: 'none' }}
                 />
-                {formData.imageUrl && (
-                  <div className="avatar-preview-box">
-                    <span className="preview-label">Xem trước ảnh:</span>
-                    <img
-                      src={formData.imageUrl}
-                      alt="Preview"
-                      className="preview-img"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
+
+                <div className="image-upload-container">
+                  {formData.imageUrl ? (
+                    <div className="image-preview-card">
+                      <div className="preview-avatar-wrapper">
+                        <img
+                          src={formData.imageUrl}
+                          alt="Preview"
+                          className="uploaded-preview-img"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              'https://placehold.co/120x120/1e293b/ffffff?text=Image';
+                          }}
+                        />
+                      </div>
+                      <div className="preview-info">
+                        <div className="preview-url-text" title={formData.imageUrl}>
+                          {formData.imageUrl}
+                        </div>
+                        <div className="preview-actions">
+                          <button
+                            type="button"
+                            className="btn-upload-file"
+                            onClick={handleTriggerFileInput}
+                            disabled={isUploading}
+                          >
+                            {isUploading ? (
+                              <>
+                                <Loader2 size={14} className="spin-icon" />
+                                <span>Đang tải...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Upload size={14} />
+                                <span>Chọn ảnh khác</span>
+                              </>
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-remove-image"
+                            onClick={handleRemoveImage}
+                            title="Xóa ảnh hiện tại"
+                          >
+                            <Trash2 size={14} />
+                            <span>Xóa</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      className={`upload-dropzone ${isUploading ? 'uploading' : ''}`}
+                      onClick={!isUploading ? handleTriggerFileInput : undefined}
+                    >
+                      {isUploading ? (
+                        <div className="upload-dropzone-content">
+                          <Loader2 size={24} className="spin-icon text-accent" />
+                          <span className="dropzone-title">Đang tải ảnh lên hệ thống...</span>
+                        </div>
+                      ) : (
+                        <div className="upload-dropzone-content">
+                          <div className="upload-icon-circle">
+                            <Upload size={20} />
+                          </div>
+                          <div className="dropzone-details">
+                            <span className="dropzone-title">Chọn ảnh từ máy tính</span>
+                            <span className="dropzone-subtitle">Hỗ trợ JPG, PNG, WEBP, GIF (Tối đa 10MB)</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="url-toggle-wrapper">
+                    <button
+                      type="button"
+                      className="btn-toggle-url"
+                      onClick={() => setShowUrlInput(!showUrlInput)}
+                    >
+                      <LinkIcon size={13} />
+                      <span>{showUrlInput ? 'Ẩn ô nhập URL trực tiếp' : 'Hoặc nhập URL ảnh trực tiếp'}</span>
+                    </button>
+
+                    {showUrlInput && (
+                      <input
+                        id="artist-image"
+                        type="url"
+                        placeholder="https://example.com/artist.jpg hoặc đường dẫn ảnh..."
+                        value={formData.imageUrl || ''}
+                        onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                        className="manual-url-input"
+                      />
+                    )}
                   </div>
-                )}
+                </div>
               </div>
 
               <div className="form-group">

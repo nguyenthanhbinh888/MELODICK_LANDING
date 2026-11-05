@@ -173,3 +173,15 @@ export const adminSettingsApi = {
   },
 };
 
+// 6. ADMIN FILE UPLOAD API
+export const adminUploadApi = {
+  uploadImage: async (file: File): Promise<{ url: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return request<{ url: string }>('/api/admin/uploads/image', {
+      method: 'POST',
+      body: formData,
+    });
+  },
+};
+
