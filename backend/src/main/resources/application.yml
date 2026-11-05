@@ -23,8 +23,14 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     baseline-version: 0
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
 app:
+  upload:
+    dir: ${UPLOAD_DIR:./uploads}
   jwt:
     secret: ${JWT_SECRET:melodick-recs-super-secret-key-for-jwt-authentication-needs-to-be-at-least-256-bits-long-2026}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}

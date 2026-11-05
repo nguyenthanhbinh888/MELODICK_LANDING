@@ -11,6 +11,8 @@ backend/target/
 backend/.mvn/
 backend/*.log
 backend/.env
+backend/uploads/
+uploads/
 
 # IDE / OS
 .idea/
