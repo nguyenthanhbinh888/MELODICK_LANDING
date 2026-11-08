@@ -26,6 +26,8 @@ export interface ArtistStats {
   channelTitle?: string;
   totalViews: number;
   formattedViews: string;
+  topVideoViews?: number;
+  formattedTopVideoViews?: string;
   followersCount: number;
   formattedFollowers: string;
   videoCount: number;
