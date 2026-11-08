@@ -421,7 +421,7 @@ export const AdminArtistsPage: React.FC = () => {
                   </td>
                   <td>
                     <span className="links-count-pill">
-                      {(artist.links || []).filter((l) => l.url && l.url !== '#').length} nền tảng
+                      {(artist.links || []).filter((l) => l.url && l.url.trim().length > 0 && l.url.trim() !== '#' && (l.url.trim().startsWith('http://') || l.url.trim().startsWith('https://'))).length} nền tảng
                     </span>
                   </td>
                   <td>

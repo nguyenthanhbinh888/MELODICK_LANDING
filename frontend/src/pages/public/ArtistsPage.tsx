@@ -184,12 +184,9 @@ export const ArtistsPage: React.FC = () => {
 
     // 2. If no verified view count, but artist has platform links
     if (validLinks.length > 0) {
-      const hasSpotify = validLinks.some((l) => l.platform.toLowerCase().includes('spotify'));
-      const hasSoundCloud = validLinks.some((l) => l.platform.toLowerCase().includes('soundcloud'));
-      const hasYouTube = validLinks.some((l) => l.platform.toLowerCase().includes('youtube'));
-      const hasInstagram = validLinks.some((l) => l.platform.toLowerCase().includes('instagram'));
+      const primaryPlatform = (stats?.platform || validLinks[0].platform || '').trim().toLowerCase();
 
-      if (hasSpotify) {
+      if (primaryPlatform.includes('spotify')) {
         return (
           <div className="artist-platform-badge spotify-badge" title="Nghệ sĩ trên Spotify">
             <span className="platform-dot spotify-dot" />
@@ -197,7 +194,7 @@ export const ArtistsPage: React.FC = () => {
           </div>
         );
       }
-      if (hasSoundCloud) {
+      if (primaryPlatform.includes('soundcloud')) {
         return (
           <div className="artist-platform-badge soundcloud-badge" title="Nghệ sĩ trên SoundCloud">
             <span className="platform-dot soundcloud-dot" />
@@ -205,7 +202,7 @@ export const ArtistsPage: React.FC = () => {
           </div>
         );
       }
-      if (hasYouTube) {
+      if (primaryPlatform.includes('youtube')) {
         return (
           <div className="artist-platform-badge youtube-badge" title="Kênh YouTube">
             <span className="platform-dot youtube-dot" />
@@ -213,7 +210,7 @@ export const ArtistsPage: React.FC = () => {
           </div>
         );
       }
-      if (hasInstagram) {
+      if (primaryPlatform.includes('instagram')) {
         return (
           <div className="artist-platform-badge instagram-badge" title="Instagram">
             <span className="platform-dot instagram-dot" />

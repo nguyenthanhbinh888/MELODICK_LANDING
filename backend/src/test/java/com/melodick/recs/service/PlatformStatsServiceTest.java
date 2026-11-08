@@ -14,6 +14,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -153,6 +155,74 @@ class PlatformStatsServiceTest {
         verifyNoInteractions(spotifyPublicClient);
         verifyNoInteractions(soundCloudPublicClient);
         verify(statsRepository, never()).save(any(ArtistPlatformStats.class));
+    }
+
+    @Test
+    void getArtistStats_WhenArtistHasOnlyBlankOrHashLinks_ReturnsNullWithoutScraping() {
+        Artist blankLinksArtist = new Artist();
+        blankLinksArtist.setId(3L);
+        blankLinksArtist.setName("Bro");
+        blankLinksArtist.addLink(new ArtistLink("Spotify", "", 1));
+        blankLinksArtist.addLink(new ArtistLink("YouTube", "#", 2));
+        blankLinksArtist.addLink(new ArtistLink("SoundCloud", "   ", 3));
+
+        when(artistRepository.findById(3L)).thenReturn(Optional.of(blankLinksArtist));
+        when(statsRepository.findByArtistId(3L)).thenReturn(Optional.empty());
+
+        ArtistStatsResponse response = platformStatsService.getArtistStats(3L, false);
+
+        assertNull(response, "Artist with only empty or '#' links must have null stats");
+        verifyNoInteractions(youTubePublicScraper);
+        verifyNoInteractions(spotifyPublicClient);
+        verifyNoInteractions(soundCloudPublicClient);
+        verify(statsRepository, never()).save(any(ArtistPlatformStats.class));
+    }
+
+    @Test
+    void getArtistStats_WhenYouTubeScrapesZeroViews_DoesNotSetFormattedViews() {
+        when(artistRepository.findById(1L)).thenReturn(Optional.of(artist));
+        when(statsRepository.findByArtistId(1L)).thenReturn(Optional.empty());
+        when(youTubeApiClient.isConfigured()).thenReturn(false);
+
+        PlatformFetchResult scraperResult = new PlatformFetchResult();
+        scraperResult.setPlatform("YouTube");
+        scraperResult.setChannelTitle("MIRAGEMFXNK Scraped");
+        scraperResult.setTotalViews(0L);
+        scraperResult.setFollowersCount(0L);
+        scraperResult.setTopVideoId("realVid123");
+        scraperResult.setTopVideoTitle("Hottest Track");
+        scraperResult.setTopVideoViews(0L);
+        scraperResult.setSource("YOUTUBE_RSS");
+        scraperResult.setSuccess(true);
+
+        when(youTubePublicScraper.fetchStats("https://www.youtube.com/@miragemfxnk")).thenReturn(scraperResult);
+        when(statsRepository.save(any(ArtistPlatformStats.class))).thenAnswer(i -> i.getArgument(0));
+
+        ArtistStatsResponse response = platformStatsService.getArtistStats(1L, false);
+
+        assertNotNull(response);
+        assertEquals(0L, response.getTotalViews());
+        assertNull(response.getFormattedViews(), "Zero total views must have null formattedViews");
+        assertNotNull(response.getTopVideo());
+        assertNull(response.getTopVideo().getFormattedViews(), "Zero video views must have null formattedViews");
+    }
+
+    @Test
+    void getStatsForArtists_SafelyHandlesDuplicateAndCaches() {
+        ArtistPlatformStats cached = new ArtistPlatformStats();
+        cached.setArtist(artist);
+        cached.setPlatform("YouTube");
+        cached.setTotalViews(50000L);
+        cached.setSource("YOUTUBE_API");
+        cached.setLastFetchedAt(LocalDateTime.now().minusMinutes(10));
+
+        when(statsRepository.findAllByArtistIdIn(List.of(1L))).thenReturn(List.of(cached));
+
+        Map<Long, ArtistStatsResponse> result = platformStatsService.getStatsForArtists(List.of(artist));
+
+        assertNotNull(result);
+        assertTrue(result.containsKey(1L));
+        assertEquals(50000L, result.get(1L).getTotalViews());
     }
 
     @Test
