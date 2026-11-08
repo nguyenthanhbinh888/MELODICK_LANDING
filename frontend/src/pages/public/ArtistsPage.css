@@ -331,52 +331,7 @@
   transform: scale(1);
 }
 
-/* Tier 1: Hero Video CTA Button */
-.hero-video-cta {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(236, 72, 153, 0.3));
-  border: 1px solid rgba(168, 85, 247, 0.7);
-  border-radius: 20px;
-  padding: 8px 16px;
-  color: #ffffff;
-  font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 1.2px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  cursor: pointer;
-  box-shadow: 0 4px 18px rgba(168, 85, 247, 0.35);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  outline: none;
-  text-decoration: none;
-  white-space: nowrap;
-  max-width: 95%;
-  box-sizing: border-box;
-}
-
-.hero-video-cta:hover,
-.hero-video-cta:focus-visible {
-  background: linear-gradient(135deg, #a855f7, #ec4899);
-  border-color: #ffffff;
-  transform: translateY(-2px) scale(1.06);
-  box-shadow: 0 6px 24px rgba(168, 85, 247, 0.6);
-}
-
-.hero-play-icon {
-  font-size: 0.72rem;
-  line-height: 1;
-  color: #f472b6;
-  filter: drop-shadow(0 0 4px rgba(244, 114, 182, 0.8));
-  transition: transform 0.25s ease;
-}
-
-.hero-video-cta:hover .hero-play-icon {
-  transform: scale(1.15);
-  color: #ffffff;
-}
-
-/* Tier 2: Micro-Dock */
+/* Platform Micro-Dock */
 .platform-micro-dock {
   display: flex;
   flex-direction: row;
@@ -527,38 +482,10 @@
 }
 
 /* ==========================================================================
-   🏷️ Telemetry HUD Badges: Archival Catalog Code & Verified Views
+   🏷️ Header Telemetry Metric & Platform Badges
    ========================================================================== */
 
-/* Left: Archival Catalog Code [MLDK // 01] */
-.artist-catalog-badge {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 4;
-  background: rgba(10, 10, 14, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 20px;
-  padding: 3px 8px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.64rem;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  color: #a1a1aa;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  pointer-events: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  transition: border-color 0.3s ease, color 0.3s ease;
-}
-
-.artist-card:hover .artist-catalog-badge,
-.artist-card.active-card .artist-catalog-badge {
-  border-color: rgba(168, 85, 247, 0.5);
-  color: #e4e4e7;
-}
-
-/* Right: Verified Views Metric Pill */
+/* Right: Verified Top Video Views Metric Pill (Single Highest-Viewed Video Only) */
 .artist-views-badge {
   position: absolute;
   top: 10px;
@@ -706,219 +633,6 @@
    🎬 Modal Spotlight - Video Hot Nhất của Nghệ Sĩ
    ========================================================================== */
 
-.top-video-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.86);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  animation: modalFadeIn 0.25s ease-out;
-}
-
-@keyframes modalFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.top-video-modal-card {
-  background: #0d0d10;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 20px;
-  max-width: 760px;
-  width: 100%;
-  max-height: 92vh;
-  overflow-y: auto;
-  box-shadow:
-    0 25px 60px -10px rgba(0, 0, 0, 0.95),
-    0 0 40px rgba(168, 85, 247, 0.2),
-    inset 0 1px 1px rgba(255, 255, 255, 0.15);
-  display: flex;
-  flex-direction: column;
-  animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes modalSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(24px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.top-video-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 18px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.modal-artist-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.modal-badge-channel {
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1.4px;
-  color: #a855f7;
-}
-
-.modal-artist-title {
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: 0.8px;
-}
-
-.modal-close-btn {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.modal-close-btn:hover {
-  background: rgba(239, 68, 68, 0.2);
-  border-color: #ef4444;
-  color: #f87171;
-  transform: rotate(90deg);
-}
-
-.top-video-player-container {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  background: #000000;
-  position: relative;
-  overflow: hidden;
-}
-
-.top-video-iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  display: block;
-}
-
-.top-video-modal-details {
-  padding: 22px 24px 26px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.top-video-title {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: #fafafa;
-  line-height: 1.45;
-  letter-spacing: 0.4px;
-}
-
-.video-stats-metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-}
-
-.metric-box {
-  background: rgba(255, 255, 255, 0.035);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  transition: border-color 0.25s ease, background 0.25s ease;
-}
-
-.metric-box:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(168, 85, 247, 0.4);
-}
-
-.metric-label {
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: #a1a1aa;
-  letter-spacing: 0.6px;
-}
-
-.metric-value {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: 0.4px;
-}
-
-.modal-actions-bar {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 6px;
-}
-
-.modal-external-link {
-  background: #a855f7;
-  color: #ffffff;
-  padding: 10px 20px;
-  border-radius: 10px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-decoration: none;
-  letter-spacing: 0.6px;
-  transition: all 0.25s ease;
-  box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
-}
-
-.modal-external-link:hover {
-  background: #9333ea;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.6);
-}
-
-.modal-dismiss-btn {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #e4e4e7;
-  padding: 10px 20px;
-  border-radius: 10px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.25s ease;
-}
-
-.modal-dismiss-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
-}
-
 .artists-loading,
 .artists-error,
 .artists-empty {
@@ -964,13 +678,6 @@
     border-radius: 14px;
   }
 
-  .artist-catalog-badge {
-    top: 8px;
-    left: 8px;
-    font-size: 0.58rem;
-    padding: 2px 6px;
-  }
-
   .artist-views-badge,
   .artist-platform-badge {
     top: 8px;
@@ -994,15 +701,7 @@
   }
 
   .artist-links-overlay {
-    gap: 8px;
     padding: 8px;
-  }
-
-  .hero-video-cta {
-    font-size: 0.66rem;
-    padding: 6px 12px;
-    letter-spacing: 0.8px;
-    max-width: 95%;
   }
 
   /* Micro-dock shrinks to 28px on mobile */
@@ -1036,30 +735,6 @@
     width: 100%;
     height: 100%;
   }
-
-  .video-stats-metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-
-  .top-video-modal-details {
-    padding: 16px 18px 20px;
-    gap: 14px;
-  }
-
-  .top-video-title {
-    font-size: 0.95rem;
-  }
-
-  .modal-actions-bar {
-    flex-direction: column-reverse;
-  }
-
-  .modal-external-link,
-  .modal-dismiss-btn {
-    width: 100%;
-    text-align: center;
-  }
 }
 
 /* Màn hình điện thoại siêu nhỏ (<= 360px) */
@@ -1092,7 +767,6 @@
   .artist-avatar-img,
   .artist-links-overlay,
   .micro-dock-btn,
-  .hero-video-cta,
   .dubplate-vinyl-svg,
   .vinyl-rotating-body {
     transition: none !important;

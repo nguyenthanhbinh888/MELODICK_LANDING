@@ -9,6 +9,8 @@ public class ArtistStatsResponse {
     private String channelTitle;
     private Long totalViews;
     private String formattedViews;
+    private Long topVideoViews;
+    private String formattedTopVideoViews;
     private Long followersCount;
     private String formattedFollowers;
     private Integer videoCount;
@@ -35,6 +37,12 @@ public class ArtistStatsResponse {
 
     public String getFormattedViews() { return formattedViews; }
     public void setFormattedViews(String formattedViews) { this.formattedViews = formattedViews; }
+
+    public Long getTopVideoViews() { return topVideoViews; }
+    public void setTopVideoViews(Long topVideoViews) { this.topVideoViews = topVideoViews; }
+
+    public String getFormattedTopVideoViews() { return formattedTopVideoViews; }
+    public void setFormattedTopVideoViews(String formattedTopVideoViews) { this.formattedTopVideoViews = formattedTopVideoViews; }
 
     public Long getFollowersCount() { return followersCount; }
     public void setFollowersCount(Long followersCount) { this.followersCount = followersCount; }

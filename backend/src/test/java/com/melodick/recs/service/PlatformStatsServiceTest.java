@@ -86,8 +86,12 @@ class PlatformStatsServiceTest {
         assertNotNull(response);
         assertEquals(1840000L, response.getTotalViews());
         assertEquals("MIRAGEMFXNK Official", response.getChannelTitle());
+        assertEquals(1200000L, response.getTopVideoViews());
+        assertEquals("1.2M lượt xem", response.getFormattedTopVideoViews());
         assertNotNull(response.getTopVideo());
         assertEquals("NIGHT DRIFT", response.getTopVideo().getTitle());
+        assertEquals(1200000L, response.getTopVideo().getViewCount());
+        assertEquals("1.2M lượt xem", response.getTopVideo().getFormattedViews());
 
         // Verify no external scraper/api called
         verifyNoInteractions(youTubeApiClient);
@@ -203,6 +207,8 @@ class PlatformStatsServiceTest {
         assertNotNull(response);
         assertEquals(0L, response.getTotalViews());
         assertNull(response.getFormattedViews(), "Zero total views must have null formattedViews");
+        assertEquals(0L, response.getTopVideoViews());
+        assertNull(response.getFormattedTopVideoViews(), "Zero video views must have null formattedTopVideoViews");
         assertNotNull(response.getTopVideo());
         assertNull(response.getTopVideo().getFormattedViews(), "Zero video views must have null formattedViews");
     }

@@ -279,6 +279,14 @@ public class PlatformStatsService {
         if ("YouTube".equalsIgnoreCase(entity.getPlatform()) &&
                 StringUtils.hasText(entity.getTopVideoId()) &&
                 !isSyntheticVideoId(entity.getTopVideoId())) {
+            Long topViews = entity.getTopVideoViews();
+            res.setTopVideoViews(topViews != null ? topViews : 0L);
+            if (topViews != null && topViews > 0) {
+                res.setFormattedTopVideoViews(ArtistStatsResponse.formatMetricCount(topViews) + " lượt xem");
+            } else {
+                res.setFormattedTopVideoViews(null);
+            }
+
             String embedUrl = StringUtils.hasText(entity.getTopVideoEmbedUrl()) ?
                     entity.getTopVideoEmbedUrl() : YouTubeUrlHelper.buildEmbedUrl(entity.getTopVideoId());
             TopVideoResponse topVideo = new TopVideoResponse();
@@ -286,9 +294,9 @@ public class PlatformStatsService {
             topVideo.setTitle(StringUtils.hasText(entity.getTopVideoTitle()) ? entity.getTopVideoTitle() : "Video nổi bật");
             topVideo.setUrl(StringUtils.hasText(entity.getTopVideoUrl()) ? entity.getTopVideoUrl() : YouTubeUrlHelper.buildWatchUrl(entity.getTopVideoId()));
             topVideo.setThumbnailUrl(StringUtils.hasText(entity.getTopVideoThumbnail()) ? entity.getTopVideoThumbnail() : YouTubeUrlHelper.buildThumbnailUrl(entity.getTopVideoId()));
-            topVideo.setViewCount(entity.getTopVideoViews());
-            if (entity.getTopVideoViews() > 0) {
-                topVideo.setFormattedViews(ArtistStatsResponse.formatMetricCount(entity.getTopVideoViews()) + " lượt xem");
+            topVideo.setViewCount(topViews);
+            if (topViews != null && topViews > 0) {
+                topVideo.setFormattedViews(ArtistStatsResponse.formatMetricCount(topViews) + " lượt xem");
             } else {
                 topVideo.setFormattedViews(null);
             }
@@ -297,6 +305,8 @@ public class PlatformStatsService {
             res.setTopVideo(topVideo);
         } else {
             res.setTopVideo(null);
+            res.setTopVideoViews(0L);
+            res.setFormattedTopVideoViews(null);
         }
 
         return res;

@@ -1,14 +1,13 @@
-import React, { useEffect, useState, useCallback, useId } from 'react';
+import React, { useEffect, useState, useId } from 'react';
 import type { Artist, ArtistLink } from '../../types';
 import { publicApi } from '../../services/api';
 import {
-  isSyntheticVideo,
   isValidUrl,
   getPlatformActionLabel,
   getPlatformDockClass,
   getArtistMonogram,
-  formatCatalogCode,
   getArtistRoleTag,
+  resolveCardBadge,
 } from './artistUtils';
 import './ArtistsPage.css';
 
@@ -277,7 +276,6 @@ export const ArtistsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeCardId, setActiveCardId] = useState<number | null>(null);
   const [imageErrors, setImageErrors] = useState<Record<number, boolean>>({});
-  const [modalArtist, setModalArtist] = useState<Artist | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -312,26 +310,6 @@ export const ArtistsPage: React.FC = () => {
     };
   }, []);
 
-  // Close modal on Escape key
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
-      setModalArtist(null);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (modalArtist) {
-      window.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
-    };
-  }, [modalArtist, handleKeyDown]);
-
   // Dismiss expanded card when tapping or clicking outside
   useEffect(() => {
     if (activeCardId === null) return;
@@ -339,7 +317,7 @@ export const ArtistsPage: React.FC = () => {
     const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
       const target = e.target as HTMLElement | null;
       if (!target) return;
-      if (!target.closest('.artist-card.active-card') && !target.closest('.top-video-modal-card')) {
+      if (!target.closest('.artist-card.active-card')) {
         setActiveCardId(null);
       }
     };
@@ -358,97 +336,34 @@ export const ArtistsPage: React.FC = () => {
     setImageErrors((prev) => ({ ...prev, [id]: true }));
   };
 
-  const openTopVideoModal = (e: React.MouseEvent, artist: Artist) => {
-    e.stopPropagation();
-    const topVideo = artist.stats?.topVideo;
-    if (
-      topVideo &&
-      topVideo.embedUrl &&
-      topVideo.platform === 'YouTube' &&
-      !isSyntheticVideo(topVideo.videoId)
-    ) {
-      setModalArtist(artist);
-    }
-  };
-
-  const getEmbedUrlWithAutoplay = (rawUrl?: string) => {
-    if (!rawUrl) return '';
-    if (rawUrl.includes('youtube.com/embed/')) {
-      const separator = rawUrl.includes('?') ? '&' : '?';
-      return `${rawUrl}${separator}autoplay=1&rel=0`;
-    }
-    return rawUrl;
-  };
-
   /**
    * Renders the corner header badge:
-   * 1. Real verified YouTube views if > 0
-   * 2. Otherwise, clean platform badge (e.g. Spotify Artist, SoundCloud Creator)
-   * 3. If no links configured: null (no fake badge)
+   * 1. Strictly the real verified view count of the single highest-viewed video (if views > 0 and video is valid).
+   *    Never an average, never a channel total, and NEVER a fake number.
+   * 2. Otherwise, if artist has platform links: clean platform badge (e.g. Spotify Artist, SoundCloud Creator).
+   * 3. If no links or 0/null views: null (do not show fake or empty badge).
    */
   const renderCardHeaderBadge = (artist: Artist, validLinks: ArtistLink[]) => {
-    const stats = artist.stats;
+    const badge = resolveCardBadge(artist, validLinks);
 
-    // 1. YouTube verified views
-    if (stats && stats.totalViews > 0 && stats.formattedViews) {
+    if (badge.type === 'views') {
       return (
-        <div
-          className="artist-views-badge"
-          title={`Tổng lượt xem YouTube: ${stats.totalViews.toLocaleString()}`}
-        >
+        <div className="artist-views-badge" title={badge.tooltip}>
           <span className="views-pulse-dot" />
-          <span className="views-count-text">{stats.formattedViews}</span>
+          <span className="views-count-text">{badge.text}</span>
         </div>
       );
     }
 
-    // 2. If no verified view count, but artist has platform links
-    if (validLinks.length > 0) {
-      const primaryPlatform = (stats?.platform || validLinks[0].platform || '').trim().toLowerCase();
-
-      if (primaryPlatform.includes('spotify')) {
-        return (
-          <div className="artist-platform-badge spotify-badge" title="Nghệ sĩ trên Spotify">
-            <span className="platform-dot spotify-dot" />
-            <span className="platform-badge-text">Spotify Artist</span>
-          </div>
-        );
-      }
-      if (primaryPlatform.includes('soundcloud')) {
-        return (
-          <div className="artist-platform-badge soundcloud-badge" title="Nghệ sĩ trên SoundCloud">
-            <span className="platform-dot soundcloud-dot" />
-            <span className="platform-badge-text">SoundCloud Creator</span>
-          </div>
-        );
-      }
-      if (primaryPlatform.includes('youtube')) {
-        return (
-          <div className="artist-platform-badge youtube-badge" title="Kênh YouTube">
-            <span className="platform-dot youtube-dot" />
-            <span className="platform-badge-text">YouTube</span>
-          </div>
-        );
-      }
-      if (primaryPlatform.includes('instagram')) {
-        return (
-          <div className="artist-platform-badge instagram-badge" title="Instagram">
-            <span className="platform-dot instagram-dot" />
-            <span className="platform-badge-text">Instagram</span>
-          </div>
-        );
-      }
-
-      // First valid platform
+    if (badge.type === 'platform') {
       return (
-        <div className="artist-platform-badge default-badge" title={validLinks[0].platform}>
-          <span className="platform-dot default-dot" />
-          <span className="platform-badge-text">{validLinks[0].platform}</span>
+        <div className={`artist-platform-badge ${badge.badgeClass}`} title={badge.tooltip}>
+          <span className={`platform-dot ${badge.dotClass}`} />
+          <span className="platform-badge-text">{badge.text}</span>
         </div>
       );
     }
 
-    // 3. No links configured: return nothing (do not show fake badge)
     return null;
   };
 
@@ -462,20 +377,10 @@ export const ArtistsPage: React.FC = () => {
         <div className="artists-empty">Chưa có nghệ sĩ nào được công khai.</div>
       ) : (
         <div className="artist-grid">
-          {artists.map((artist, index) => {
+          {artists.map((artist) => {
             const isActive = activeCardId === artist.id;
             const validLinks = (artist.links || []).filter((l) => isValidUrl(l.url));
             const hasImage = Boolean(artist.imageUrl && !imageErrors[artist.id]);
-            const stats = artist.stats;
-            const topVideo = stats?.topVideo;
-
-            // Only show "Video Hot" hero CTA if topVideo is real, from YouTube, has embedUrl, and is not synthetic
-            const hasPlayableVideo = Boolean(
-              topVideo &&
-              topVideo.platform === 'YouTube' &&
-              topVideo.embedUrl &&
-              !isSyntheticVideo(topVideo.videoId)
-            );
 
             return (
               <article
@@ -492,12 +397,7 @@ export const ArtistsPage: React.FC = () => {
                 aria-expanded={isActive}
                 aria-labelledby={`artist-name-${artist.id}`}
               >
-                {/* 🏷️ Telemetry HUD Catalog Code (Boiler Room / Archival Label) */}
-                <div className="artist-catalog-badge" aria-hidden="true">
-                  {formatCatalogCode(index, artist)}
-                </div>
-
-                {/* 🌟 Header Metric Pill / Platform Badge */}
+                {/* 🌟 Top-Right Header Metric Pill (Real Single Highest-Viewed Video Views or Platform Badge) */}
                 {renderCardHeaderBadge(artist, validLinks)}
 
                 {/* 🎨 Media Canvas: Dubplate Vinyl Monogram Placeholder or Artist Artwork */}
@@ -517,23 +417,8 @@ export const ArtistsPage: React.FC = () => {
                   {/* Gradient Scrim blending media seamlessly into monolithic footer */}
                   <div className="artist-media-scrim" aria-hidden="true" />
 
-                  {/* 🚀 Two-Tier Micro-Dock Overlay (Scoped to Media Canvas for precise 1:1 framing) */}
+                  {/* 🚀 Horizontal Platform Micro-Dock Overlay (Centered over media canvas on hover/focus/tap) */}
                   <div className="artist-links-overlay">
-                    {/* Tier 1: Hero Video CTA Button (when verified video exists) */}
-                    {hasPlayableVideo && (
-                      <button
-                        type="button"
-                        className="hero-video-cta"
-                        onClick={(e) => openTopVideoModal(e, artist)}
-                        aria-label={`Xem video hot của ${artist.name}: ${topVideo!.title}`}
-                        title={`Xem video hot: ${topVideo!.title}`}
-                      >
-                        <span className="hero-play-icon" aria-hidden="true">▶</span>
-                        <span className="hero-video-text">XEM VIDEO HOT</span>
-                      </button>
-                    )}
-
-                    {/* Tier 2: Horizontal Micro-Dock */}
                     {validLinks.length > 0 ? (
                       <div
                         className="platform-micro-dock"
@@ -583,120 +468,6 @@ export const ArtistsPage: React.FC = () => {
           })}
         </div>
       )}
-
-      {/* 🎬 Hottest Video Spotlight Modal (Only opened when real verified playable video exists) */}
-      {modalArtist &&
-        modalArtist.stats?.topVideo &&
-        modalArtist.stats.topVideo.embedUrl &&
-        !isSyntheticVideo(modalArtist.stats.topVideo.videoId) && (
-          <div
-            className="top-video-modal-backdrop"
-            onClick={() => setModalArtist(null)}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="top-video-modal-title"
-          >
-            <div
-              className="top-video-modal-card"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="top-video-modal-header">
-                <div className="modal-artist-info">
-                  <span className="modal-badge-channel">
-                    {modalArtist.stats.platform || 'YouTube'}
-                    {modalArtist.stats.channelTitle ? ` • ${modalArtist.stats.channelTitle}` : ''}
-                  </span>
-                  <h3 id="top-video-modal-title" className="modal-artist-title">
-                    {modalArtist.name} — Video Nổi Bật
-                  </h3>
-                </div>
-                <button
-                  type="button"
-                  className="modal-close-btn"
-                  onClick={() => setModalArtist(null)}
-                  aria-label="Đóng cửa sổ xem video"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {/* Video Player */}
-              <div className="top-video-player-container">
-                <iframe
-                  src={getEmbedUrlWithAutoplay(modalArtist.stats.topVideo.embedUrl)}
-                  title={modalArtist.stats.topVideo.title || `${modalArtist.name} - Video`}
-                  className="top-video-iframe"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                />
-              </div>
-
-              {/* Video details & statistics bar (Only showing verified non-zero numbers) */}
-              <div className="top-video-modal-details">
-                <h4 className="top-video-title">{modalArtist.stats.topVideo.title}</h4>
-
-                <div className="video-stats-metrics-grid">
-                  {modalArtist.stats.topVideo.viewCount !== undefined &&
-                    modalArtist.stats.topVideo.viewCount > 0 && (
-                      <div className="metric-box">
-                        <span className="metric-label">🔥 Lượt xem Video</span>
-                        <span className="metric-value">
-                          {modalArtist.stats.topVideo.formattedViews ||
-                            modalArtist.stats.topVideo.viewCount.toLocaleString()}
-                        </span>
-                      </div>
-                    )}
-
-                  {modalArtist.stats.totalViews > 0 && (
-                    <div className="metric-box">
-                      <span className="metric-label">👁️ Tổng lượt xem Kênh</span>
-                      <span className="metric-value">
-                        {modalArtist.stats.formattedViews ||
-                          modalArtist.stats.totalViews.toLocaleString()}
-                      </span>
-                    </div>
-                  )}
-
-                  {modalArtist.stats.followersCount > 0 && (
-                    <div className="metric-box">
-                      <span className="metric-label">👥 Người theo dõi</span>
-                      <span className="metric-value">
-                        {modalArtist.stats.formattedFollowers ||
-                          modalArtist.stats.followersCount.toLocaleString()}
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="metric-box">
-                    <span className="metric-label">🌐 Nền tảng</span>
-                    <span className="metric-value">YouTube</span>
-                  </div>
-                </div>
-
-                {/* Modal footer actions */}
-                <div className="modal-actions-bar">
-                  {modalArtist.stats.topVideo.url && (
-                    <a
-                      href={modalArtist.stats.topVideo.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="modal-external-link"
-                    >
-                      Mở trên YouTube ↗
-                    </a>
-                  )}
-                  <button
-                    type="button"
-                    className="modal-dismiss-btn"
-                    onClick={() => setModalArtist(null)}
-                  >
-                    Đóng
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
     </section>
   );
 };
