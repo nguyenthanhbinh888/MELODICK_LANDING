@@ -39,6 +39,9 @@ class SecurityAndPublicApiIntegrationTest {
     @MockBean
     private DashboardService dashboardService;
 
+    @MockBean
+    private com.melodick.recs.service.PlatformStatsService platformStatsService;
+
     @Test
     void publicSite_PermitAll_ReturnsOk() throws Exception {
         when(publicService.getPublicSiteSettings()).thenReturn(Collections.emptyMap());
@@ -74,8 +77,30 @@ class SecurityAndPublicApiIntegrationTest {
     }
 
     @Test
+    void publicArtistStats_PermitAll_ReturnsOk() throws Exception {
+        when(publicService.getArtistStats(1L, false)).thenReturn(new com.melodick.recs.dto.response.ArtistStatsResponse());
+
+        mockMvc.perform(get("/api/public/artists/1/stats"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void publicArtistTopVideo_PermitAll_ReturnsOk() throws Exception {
+        when(publicService.getArtistTopVideo(1L)).thenReturn(new com.melodick.recs.dto.response.TopVideoResponse());
+
+        mockMvc.perform(get("/api/public/artists/1/top-video"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void adminArtists_WithoutToken_ReturnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/admin/artists"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void adminArtistRefreshStats_WithoutToken_ReturnsUnauthorized() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/admin/artists/1/refresh-stats"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -91,6 +116,15 @@ class SecurityAndPublicApiIntegrationTest {
         when(artistService.getAllArtists(null)).thenReturn(Collections.emptyList());
 
         mockMvc.perform(get("/api/admin/artists"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = {"ADMIN"})
+    void adminArtistRefreshStats_WithAdminRole_ReturnsOk() throws Exception {
+        when(platformStatsService.forceRefreshArtistStats(1L)).thenReturn(new com.melodick.recs.dto.response.ArtistStatsResponse());
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/admin/artists/1/refresh-stats"))
                 .andExpect(status().isOk());
     }
 }

@@ -13,6 +13,7 @@ public class ArtistResponse {
     private boolean published;
     private int displayOrder;
     private List<ArtistLinkResponse> links = new ArrayList<>();
+    private ArtistStatsResponse stats;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -41,6 +42,9 @@ public class ArtistResponse {
 
     public List<ArtistLinkResponse> getLinks() { return links; }
     public void setLinks(List<ArtistLinkResponse> links) { this.links = links; }
+
+    public ArtistStatsResponse getStats() { return stats; }
+    public void setStats(ArtistStatsResponse stats) { this.stats = stats; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

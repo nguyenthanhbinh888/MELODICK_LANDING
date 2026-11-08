@@ -8,6 +8,32 @@ export interface ArtistLink {
   updatedAt?: string;
 }
 
+export interface TopVideo {
+  videoId?: string;
+  title: string;
+  url?: string;
+  thumbnailUrl?: string;
+  viewCount?: number;
+  formattedViews?: string;
+  embedUrl?: string;
+  platform?: string;
+}
+
+export interface ArtistStats {
+  artistId?: number;
+  artistName?: string;
+  platform: string;
+  channelTitle?: string;
+  totalViews: number;
+  formattedViews: string;
+  followersCount: number;
+  formattedFollowers: string;
+  videoCount: number;
+  topVideo?: TopVideo;
+  source?: string;
+  lastFetchedAt?: string;
+}
+
 export interface Artist {
   id: number;
   name: string;
@@ -17,6 +43,7 @@ export interface Artist {
   published: boolean;
   displayOrder: number;
   links: ArtistLink[];
+  stats?: ArtistStats;
   createdAt?: string;
   updatedAt?: string;
 }
