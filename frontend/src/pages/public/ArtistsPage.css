@@ -92,7 +92,8 @@
     transform: scale(1.08);
   }
 
-  .artist-card:hover .artist-links-overlay {
+  .artist-card:hover .artist-links-overlay,
+  .artist-card:focus-within .artist-links-overlay {
     opacity: 1;
     visibility: visible;
     transform: scale(1);
@@ -141,9 +142,9 @@
   left: 0;
   right: 0;
   height: 48px;
-  background: linear-gradient(180deg, transparent 0%, rgba(12, 12, 16, 0.75) 65%, rgba(12, 12, 16, 1) 100%);
+  background: linear-gradient(180deg, transparent 0%, rgba(12, 12, 16, 0.5) 60%, rgba(12, 12, 16, 0.88) 100%);
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
 }
 
 /* ==========================================================================
@@ -212,13 +213,15 @@
 
 /* Turntable rotation on hover and active state */
 @media (hover: hover) and (pointer: fine) {
-  .artist-card:hover .dubplate-vinyl-svg {
+  .artist-card:hover .vinyl-rotating-body {
     animation: vinylSpin 20s linear infinite;
+    transform-origin: 100px 100px;
   }
 }
 
-.artist-card.active-card .dubplate-vinyl-svg {
+.artist-card.active-card .vinyl-rotating-body {
   animation: vinylSpin 20s linear infinite;
+  transform-origin: 100px 100px;
 }
 
 @keyframes vinylSpin {
@@ -237,7 +240,7 @@
 .artist-info-slate {
   padding: 10px 14px 16px;
   text-align: center;
-  background: rgba(12, 12, 16, 1);
+  background: linear-gradient(180deg, rgba(12, 12, 16, 0.88) 0%, rgba(10, 10, 14, 0.96) 100%);
   color: var(--text-main);
   display: flex;
   flex-direction: column;
@@ -295,13 +298,8 @@
 
 .artist-links-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: calc(100% - var(--artist-info-h));
-  background: rgba(8, 8, 12, 0.68);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(10, 10, 16, 0.72) 0%, rgba(6, 6, 10, 0.88) 100%);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -311,10 +309,10 @@
   visibility: hidden;
   pointer-events: none;
   transition: 
-    opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
-    visibility 0.35s ease;
-  transform: scale(0.96);
+    opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0.3s ease;
+  transform: scale(0.97);
   padding: 12px;
   z-index: 5;
   overflow: hidden; /* Eliminates the scrollbar bug entirely */
@@ -325,7 +323,8 @@
   box-shadow: var(--aura-spotlight);
 }
 
-.artist-card.active-card .artist-links-overlay {
+.artist-card.active-card .artist-links-overlay,
+.artist-card:focus-within .artist-links-overlay {
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
@@ -347,13 +346,13 @@
   justify-content: center;
   gap: 6px;
   cursor: pointer;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   box-shadow: 0 4px 18px rgba(168, 85, 247, 0.35);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   outline: none;
   text-decoration: none;
   white-space: nowrap;
+  max-width: 95%;
+  box-sizing: border-box;
 }
 
 .hero-video-cta:hover,
@@ -388,10 +387,9 @@
   background: var(--dock-bg);
   border: 1px solid var(--dock-border);
   border-radius: 30px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
   max-width: 95%;
+  flex-wrap: wrap;
 }
 
 .micro-dock-btn {
@@ -406,6 +404,7 @@
   color: var(--dock-icon-color);
   text-decoration: none;
   position: relative;
+  flex-shrink: 0;
   transition: 
     transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
     background 0.25s ease,
@@ -1003,17 +1002,21 @@
     font-size: 0.66rem;
     padding: 6px 12px;
     letter-spacing: 0.8px;
+    max-width: 95%;
   }
 
   /* Micro-dock shrinks to 28px on mobile */
   .platform-micro-dock {
     gap: 6px;
-    padding: 4px 6px;
+    padding: 4px 8px;
+    max-width: 95%;
+    flex-wrap: wrap;
   }
 
   .micro-dock-btn {
     width: 28px;
     height: 28px;
+    flex-shrink: 0;
   }
 
   .micro-dock-btn svg {
@@ -1021,15 +1024,15 @@
     height: 14px;
   }
 
-  /* 44px WCAG 2.5.5 touch target on mobile */
+  /* Ergonomic non-overlapping touch target */
   .micro-dock-btn::before {
     content: '';
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    min-width: 44px;
-    min-height: 44px;
+    min-width: 36px;
+    min-height: 36px;
     width: 100%;
     height: 100%;
   }
@@ -1090,7 +1093,8 @@
   .artist-links-overlay,
   .micro-dock-btn,
   .hero-video-cta,
-  .dubplate-vinyl-svg {
+  .dubplate-vinyl-svg,
+  .vinyl-rotating-body {
     transition: none !important;
     animation: none !important;
   }
