@@ -11,6 +11,8 @@ class YouTubeUrlHelperTest {
         // Standard watch URL
         assertEquals("kxpcV6650V4", YouTubeUrlHelper.extractVideoId("https://www.youtube.com/watch?v=kxpcV6650V4"));
         assertEquals("kxpcV6650V4", YouTubeUrlHelper.extractVideoId("http://youtube.com/watch?v=kxpcV6650V4&feature=shared"));
+        assertEquals("kxpcV6650V4", YouTubeUrlHelper.extractVideoId("https://www.youtube.com/watch?feature=shared&v=kxpcV6650V4"));
+        assertEquals("kxpcV6650V4", YouTubeUrlHelper.extractVideoId("https://www.youtube.com/watch?si=xyz123&v=kxpcV6650V4&t=10s"));
 
         // Short youtu.be URL
         assertEquals("5qap5aO4i9A", YouTubeUrlHelper.extractVideoId("https://youtu.be/5qap5aO4i9A"));
@@ -21,6 +23,9 @@ class YouTubeUrlHelperTest {
 
         // Shorts URL
         assertEquals("dQw4w9WgXcQ", YouTubeUrlHelper.extractVideoId("https://www.youtube.com/shorts/dQw4w9WgXcQ"));
+
+        // Live stream URL
+        assertEquals("liveVid1234", YouTubeUrlHelper.extractVideoId("https://www.youtube.com/live/liveVid1234"));
 
         // Direct 11-char ID
         assertEquals("dQw4w9WgXcQ", YouTubeUrlHelper.extractVideoId("dQw4w9WgXcQ"));
@@ -46,6 +51,8 @@ class YouTubeUrlHelperTest {
         assertEquals("miragemfxnk", YouTubeUrlHelper.extractHandle("https://www.youtube.com/@miragemfxnk"));
         assertEquals("411n", YouTubeUrlHelper.extractHandle("https://youtube.com/@411n"));
         assertEquals("spidex", YouTubeUrlHelper.extractHandle("@spidex"));
+        assertEquals("c_artist", YouTubeUrlHelper.extractHandle("https://www.youtube.com/c/c_artist"));
+        assertEquals("user_artist", YouTubeUrlHelper.extractHandle("https://www.youtube.com/user/user_artist"));
 
         assertNull(YouTubeUrlHelper.extractHandle("https://www.youtube.com/watch?v=kxpcV6650V4"));
         assertNull(YouTubeUrlHelper.extractHandle(""));

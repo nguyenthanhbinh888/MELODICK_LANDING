@@ -229,10 +229,12 @@ export const AdminArtistsPage: React.FC = () => {
     setIsSubmitting(true);
     try {
       if (editingArtistId) {
-        await adminArtistsApi.update(editingArtistId, formData);
+        const updated = await adminArtistsApi.update(editingArtistId, formData);
+        setArtists((prev) => prev.map((a) => (a.id === editingArtistId ? updated : a)));
         showNotification('success', `Đã cập nhật nghệ sĩ ${formData.name}`);
       } else {
-        await adminArtistsApi.create(formData);
+        const created = await adminArtistsApi.create(formData);
+        setArtists((prev) => [...prev, created]);
         showNotification('success', `Đã thêm nghệ sĩ mới ${formData.name}`);
       }
       handleCloseModal();

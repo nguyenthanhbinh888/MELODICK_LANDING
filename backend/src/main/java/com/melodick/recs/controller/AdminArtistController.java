@@ -49,13 +49,23 @@ public class AdminArtistController {
 
     @PostMapping
     public ResponseEntity<ArtistResponse> createArtist(@Valid @RequestBody ArtistCreateUpdateRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(artistService.createArtist(request));
+        ArtistResponse created = artistService.createArtist(request);
+        try {
+            ArtistStatsResponse stats = platformStatsService.getArtistStats(created.getId(), false);
+            created.setStats(stats);
+        } catch (Exception ignored) {}
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ArtistResponse> updateArtist(@PathVariable Long id,
                                                        @Valid @RequestBody ArtistCreateUpdateRequest request) {
-        return ResponseEntity.ok(artistService.updateArtist(id, request));
+        ArtistResponse updated = artistService.updateArtist(id, request);
+        try {
+            ArtistStatsResponse stats = platformStatsService.forceRefreshArtistStats(id);
+            updated.setStats(stats);
+        } catch (Exception ignored) {}
+        return ResponseEntity.ok(updated);
     }
 
     @PatchMapping("/{id}/visibility")

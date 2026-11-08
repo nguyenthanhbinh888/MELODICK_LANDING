@@ -7,9 +7,9 @@ import java.util.regex.Pattern;
 
 public class YouTubeUrlHelper {
 
-    // Regex for video ID
+    // Regex for video ID (supports watch?v=, watch?feature=...&v=, embed/, shorts/, live/, and youtu.be/)
     private static final Pattern VIDEO_ID_PATTERN = Pattern.compile(
-            "(?:youtube\\.com\\/(?:watch\\?v=|embed\\/|v\\/|shorts\\/)|youtu\\.be\\/)([a-zA-Z0-9_-]{11})"
+            "(?:youtube\\.com\\/(?:watch\\?(?:[^\"&\\s]+&)*v=|embed\\/|v\\/|shorts\\/|live\\/)|youtu\\.be\\/)([a-zA-Z0-9_-]{11})"
     );
 
     // Regex for channel ID (starts with UC and followed by 20-24 chars)
@@ -17,9 +17,9 @@ public class YouTubeUrlHelper {
             "youtube\\.com\\/(?:channel\\/)(UC[a-zA-Z0-9_-]{20,24})"
     );
 
-    // Regex for handle (starts with @)
+    // Regex for handle / custom / user URLs (starts with @, /c/, or /user/)
     private static final Pattern HANDLE_PATTERN = Pattern.compile(
-            "youtube\\.com\\/@([a-zA-Z0-9_.-]+)"
+            "youtube\\.com\\/(?:@|c\\/|user\\/)([a-zA-Z0-9_.-]+)"
     );
 
     // Regex for direct @handle string
