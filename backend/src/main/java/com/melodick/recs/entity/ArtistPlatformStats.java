@@ -49,7 +49,7 @@ public class ArtistPlatformStats {
     private String topVideoEmbedUrl;
 
     @Column(nullable = false, length = 50)
-    private String source = "FALLBACK";
+    private String source = "SCRAPED";
 
     @Column(name = "last_fetched_at", nullable = false)
     private LocalDateTime lastFetchedAt;

@@ -192,10 +192,78 @@
   box-shadow: 0 6px 18px rgba(255, 255, 255, 0.35);
 }
 
+.platform-link.platform-link-spotify:hover {
+  background: #1db954;
+  color: #000000;
+  border-color: #1db954;
+  box-shadow: 0 6px 20px rgba(29, 185, 84, 0.45);
+}
+
+.platform-link.platform-link-soundcloud:hover {
+  background: #ff5500;
+  color: #ffffff;
+  border-color: #ff5500;
+  box-shadow: 0 6px 20px rgba(255, 85, 0, 0.45);
+}
+
+.platform-link.platform-link-youtube:hover {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.45);
+}
+
+.platform-link.platform-link-instagram:hover {
+  background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 6px 20px rgba(225, 48, 108, 0.45);
+}
+
+.no-links-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 12px;
+  text-align: center;
+  max-width: 92%;
+  background: rgba(18, 18, 22, 0.6);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.no-links-brand-tag {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #c084fc;
+  text-transform: uppercase;
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+
+.no-links-bio {
+  font-size: 0.74rem;
+  color: #a1a1aa;
+  line-height: 1.35;
+  margin: 0;
+  letter-spacing: 0.3px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .no-links-hint {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
 }
 
 .artists-loading,
@@ -321,6 +389,98 @@
     transform: scale(1.35);
     opacity: 0.6;
   }
+}
+
+/* 🏷️ Platform Badge (cho Spotify, SoundCloud, Instagram, v.v. khi không có số view ảo) */
+.artist-platform-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 3;
+  background: rgba(10, 10, 14, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #e4e4e7;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.artist-card:hover .artist-platform-badge {
+  transform: translateY(-2px);
+}
+
+.artist-platform-badge.spotify-badge {
+  border-color: rgba(29, 185, 84, 0.35);
+}
+.artist-card:hover .artist-platform-badge.spotify-badge {
+  border-color: rgba(29, 185, 84, 0.7);
+}
+
+.artist-platform-badge.soundcloud-badge {
+  border-color: rgba(255, 85, 0, 0.35);
+}
+.artist-card:hover .artist-platform-badge.soundcloud-badge {
+  border-color: rgba(255, 85, 0, 0.7);
+}
+
+.artist-platform-badge.youtube-badge {
+  border-color: rgba(239, 68, 68, 0.35);
+}
+.artist-card:hover .artist-platform-badge.youtube-badge {
+  border-color: rgba(239, 68, 68, 0.7);
+}
+
+.artist-platform-badge.instagram-badge {
+  border-color: rgba(225, 48, 108, 0.35);
+}
+.artist-card:hover .artist-platform-badge.instagram-badge {
+  border-color: rgba(225, 48, 108, 0.7);
+}
+
+.platform-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.platform-dot.spotify-dot {
+  background: #1db954;
+  box-shadow: 0 0 6px rgba(29, 185, 84, 0.8);
+}
+
+.platform-dot.soundcloud-dot {
+  background: #ff5500;
+  box-shadow: 0 0 6px rgba(255, 85, 0, 0.8);
+}
+
+.platform-dot.youtube-dot {
+  background: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.8);
+}
+
+.platform-dot.instagram-dot {
+  background: #ec4899;
+  box-shadow: 0 0 6px rgba(236, 72, 153, 0.8);
+}
+
+.platform-dot.default-dot {
+  background: #a855f7;
+  box-shadow: 0 0 6px rgba(168, 85, 247, 0.8);
+}
+
+.platform-badge-text {
+  white-space: nowrap;
 }
 
 /* 🔥 Nút Xem Video Hot Nhất trong Overlay */

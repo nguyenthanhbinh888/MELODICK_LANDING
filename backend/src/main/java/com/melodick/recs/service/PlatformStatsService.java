@@ -58,14 +58,14 @@ public class PlatformStatsService {
 
         if (!forceRefresh && existingOpt.isPresent()) {
             ArtistPlatformStats cached = existingOpt.get();
-            if (isCacheValid(cached)) {
+            if (!"FALLBACK".equalsIgnoreCase(cached.getSource()) && isCacheValid(cached)) {
                 return mapToResponse(cached, artist.getName());
             }
         }
 
-        // Fetch freshly from public platform APIs or fallback
+        // Fetch freshly from public platform APIs (real data only, never fake fallback)
         ArtistPlatformStats updated = refreshAndSaveStats(artist, existingOpt.orElse(null));
-        return mapToResponse(updated, artist.getName());
+        return updated != null ? mapToResponse(updated, artist.getName()) : null;
     }
 
     @Transactional
@@ -84,21 +84,27 @@ public class PlatformStatsService {
 
         for (Artist artist : artists) {
             ArtistPlatformStats stats = statsByArtistId.get(artist.getId());
-            if (stats != null && isCacheValid(stats)) {
-                responseMap.put(artist.getId(), mapToResponse(stats, artist.getName()));
+            if (stats != null && !"FALLBACK".equalsIgnoreCase(stats.getSource()) && isCacheValid(stats)) {
+                ArtistStatsResponse res = mapToResponse(stats, artist.getName());
+                if (res != null) {
+                    responseMap.put(artist.getId(), res);
+                }
             } else {
-                // If missing or cache expired, refresh or generate fallback
                 try {
                     ArtistPlatformStats refreshed = refreshAndSaveStats(artist, stats);
-                    responseMap.put(artist.getId(), mapToResponse(refreshed, artist.getName()));
+                    if (refreshed != null) {
+                        ArtistStatsResponse res = mapToResponse(refreshed, artist.getName());
+                        if (res != null) {
+                            responseMap.put(artist.getId(), res);
+                        }
+                    }
                 } catch (Exception e) {
                     log.warn("Failed refreshing stats for artist [{}]: {}", artist.getName(), e.getMessage());
-                    if (stats != null) {
-                        responseMap.put(artist.getId(), mapToResponse(stats, artist.getName()));
-                    } else {
-                        ArtistPlatformStats fallback = generateFallbackStats(artist);
-                        fallback = statsRepository.save(fallback);
-                        responseMap.put(artist.getId(), mapToResponse(fallback, artist.getName()));
+                    if (stats != null && !"FALLBACK".equalsIgnoreCase(stats.getSource())) {
+                        ArtistStatsResponse res = mapToResponse(stats, artist.getName());
+                        if (res != null) {
+                            responseMap.put(artist.getId(), res);
+                        }
                     }
                 }
             }
@@ -115,7 +121,7 @@ public class PlatformStatsService {
     @Transactional(readOnly = true)
     public TopVideoResponse getTopVideo(Long artistId) {
         ArtistStatsResponse stats = getArtistStats(artistId, false);
-        return stats.getTopVideo();
+        return stats != null ? stats.getTopVideo() : null;
     }
 
     @Transactional(readOnly = true)
@@ -124,8 +130,13 @@ public class PlatformStatsService {
         List<ArtistPlatformStats> cached = statsRepository.findAllByArtistIdIn(artistIds);
         Map<Long, ArtistStatsResponse> map = new HashMap<>();
         for (ArtistPlatformStats s : cached) {
-            String artistName = s.getArtist() != null ? s.getArtist().getName() : "";
-            map.put(s.getArtist().getId(), mapToResponse(s, artistName));
+            if (!"FALLBACK".equalsIgnoreCase(s.getSource())) {
+                String artistName = s.getArtist() != null ? s.getArtist().getName() : "";
+                ArtistStatsResponse res = mapToResponse(s, artistName);
+                if (res != null) {
+                    map.put(s.getArtist().getId(), res);
+                }
+            }
         }
         return map;
     }
@@ -140,29 +151,35 @@ public class PlatformStatsService {
         PlatformFetchResult fetchResult = null;
         List<ArtistLink> links = artist.getLinks();
 
-        // 1. First priority: YouTube link
-        if (links != null) {
-            Optional<ArtistLink> ytLink = links.stream()
-                    .filter(l -> l.getPlatform() != null && l.getPlatform().equalsIgnoreCase("YouTube") && StringUtils.hasText(l.getUrl()))
-                    .findFirst();
+        // Check if artist has any valid links
+        if (links == null || links.stream().noneMatch(l -> StringUtils.hasText(l.getUrl()) && !l.getUrl().trim().equals("#"))) {
+            if (existing != null) {
+                statsRepository.delete(existing);
+            }
+            return null;
+        }
 
-            if (ytLink.isPresent()) {
-                String ytUrl = ytLink.get().getUrl().trim();
-                // 1a. Try YouTube Data API v3 if API key available
-                if (youTubeApiClient.isConfigured()) {
-                    fetchResult = youTubeApiClient.fetchStats(ytUrl);
-                }
-                // 1b. Fallback to public RSS/oEmbed scraper
-                if (fetchResult == null || !fetchResult.isSuccess()) {
-                    fetchResult = youTubePublicScraper.fetchStats(ytUrl);
-                }
+        // 1. First priority: YouTube link
+        Optional<ArtistLink> ytLink = links.stream()
+                .filter(l -> l.getPlatform() != null && l.getPlatform().equalsIgnoreCase("YouTube") && StringUtils.hasText(l.getUrl()) && !l.getUrl().trim().equals("#"))
+                .findFirst();
+
+        if (ytLink.isPresent()) {
+            String ytUrl = ytLink.get().getUrl().trim();
+            // 1a. Try YouTube Data API v3 if API key available
+            if (youTubeApiClient.isConfigured()) {
+                fetchResult = youTubeApiClient.fetchStats(ytUrl);
+            }
+            // 1b. Fallback to public RSS/oEmbed scraper
+            if (fetchResult == null || !fetchResult.isSuccess()) {
+                fetchResult = youTubePublicScraper.fetchStats(ytUrl);
             }
         }
 
         // 2. Second priority: Spotify link
-        if ((fetchResult == null || !fetchResult.isSuccess()) && links != null) {
+        if (fetchResult == null || !fetchResult.isSuccess()) {
             Optional<ArtistLink> spLink = links.stream()
-                    .filter(l -> l.getPlatform() != null && l.getPlatform().equalsIgnoreCase("Spotify") && StringUtils.hasText(l.getUrl()))
+                    .filter(l -> l.getPlatform() != null && l.getPlatform().equalsIgnoreCase("Spotify") && StringUtils.hasText(l.getUrl()) && !l.getUrl().trim().equals("#"))
                     .findFirst();
 
             if (spLink.isPresent()) {
@@ -171,9 +188,9 @@ public class PlatformStatsService {
         }
 
         // 3. Third priority: SoundCloud link
-        if ((fetchResult == null || !fetchResult.isSuccess()) && links != null) {
+        if (fetchResult == null || !fetchResult.isSuccess()) {
             Optional<ArtistLink> scLink = links.stream()
-                    .filter(l -> l.getPlatform() != null && l.getPlatform().equalsIgnoreCase("SoundCloud") && StringUtils.hasText(l.getUrl()))
+                    .filter(l -> l.getPlatform() != null && l.getPlatform().equalsIgnoreCase("SoundCloud") && StringUtils.hasText(l.getUrl()) && !l.getUrl().trim().equals("#"))
                     .findFirst();
 
             if (scLink.isPresent()) {
@@ -181,10 +198,9 @@ public class PlatformStatsService {
             }
         }
 
-        ArtistPlatformStats entity = existing != null ? existing : new ArtistPlatformStats();
-        entity.setArtist(artist);
-
         if (fetchResult != null && fetchResult.isSuccess()) {
+            ArtistPlatformStats entity = existing != null ? existing : new ArtistPlatformStats();
+            entity.setArtist(artist);
             entity.setPlatform(fetchResult.getPlatform());
             entity.setChannelTitle(fetchResult.getChannelTitle());
             entity.setTotalViews(fetchResult.getTotalViews());
@@ -197,94 +213,72 @@ public class PlatformStatsService {
             entity.setTopVideoViews(fetchResult.getTopVideoViews());
             entity.setTopVideoEmbedUrl(fetchResult.getTopVideoEmbedUrl());
             entity.setSource(fetchResult.getSource());
+            entity.setLastFetchedAt(LocalDateTime.now());
+            return statsRepository.save(entity);
         } else {
-            // Apply deterministic realistic fallback
-            applyFallbackData(entity, artist);
+            // Real fetch failed or returned nothing: remove existing stale/fallback record and return null
+            if (existing != null) {
+                statsRepository.delete(existing);
+            }
+            return null;
         }
-
-        entity.setLastFetchedAt(LocalDateTime.now());
-        return statsRepository.save(entity);
     }
 
-    private void applyFallbackData(ArtistPlatformStats stats, Artist artist) {
-        stats.setPlatform("YouTube");
-        stats.setChannelTitle(artist.getName() + " Official");
-
-        long baseViews = 500000L + Math.abs((long) artist.getName().hashCode() % 1500000L);
-        long baseFollowers = 15000L + Math.abs((long) artist.getName().hashCode() % 45000L);
-        long topViews = (long) (baseViews * 0.65);
-
-        // Curated track suggestions
-        String topTitle = artist.getName() + " - TOKYO DRIFT (Official Audio)";
-        String videoId = "kxpcV6650V4";
-        String thumb = StringUtils.hasText(artist.getImageUrl()) ? artist.getImageUrl() :
-                "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80";
-
-        if (artist.getName().toLowerCase().contains("411n")) {
-            topTitle = "411N - MEMPHIS RITUAL (Visualizer)";
-            videoId = "5qap5aO4i9A";
-            baseViews = 980400L;
-            baseFollowers = 28400L;
-            topViews = 680000L;
-        } else if (artist.getName().toLowerCase().contains("spidex")) {
-            topTitle = "SPIDEX - DARK REALITY (Bass Boosted)";
-            videoId = "CevxZvSJLk8";
-            baseViews = 742100L;
-            baseFollowers = 19800L;
-            topViews = 495000L;
-        } else if (artist.getName().toLowerCase().contains("mirage")) {
-            topTitle = "MIRAGEMFXNK - TOKYO DRIFT 2.0 (Official Music Video)";
-            videoId = "kxpcV6650V4";
-            baseViews = 1845200L;
-            baseFollowers = 42800L;
-            topViews = 1250000L;
-        }
-
-        stats.setTotalViews(baseViews);
-        stats.setFollowersCount(baseFollowers);
-        stats.setVideoCount(12);
-        stats.setTopVideoId(videoId);
-        stats.setTopVideoTitle(topTitle);
-        stats.setTopVideoUrl(YouTubeUrlHelper.buildWatchUrl(videoId));
-        stats.setTopVideoEmbedUrl(YouTubeUrlHelper.buildEmbedUrl(videoId));
-        stats.setTopVideoThumbnail(thumb);
-        stats.setTopVideoViews(topViews);
-        stats.setSource("FALLBACK");
-    }
-
-    private ArtistPlatformStats generateFallbackStats(Artist artist) {
-        ArtistPlatformStats stats = new ArtistPlatformStats();
-        stats.setArtist(artist);
-        applyFallbackData(stats, artist);
-        stats.setLastFetchedAt(LocalDateTime.now());
-        return stats;
+    private boolean isSyntheticVideoId(String videoId) {
+        if (!StringUtils.hasText(videoId)) return true;
+        return "kxpcV6650V4".equals(videoId) || "5qap5aO4i9A".equals(videoId) || "CevxZvSJLk8".equals(videoId);
     }
 
     public ArtistStatsResponse mapToResponse(ArtistPlatformStats entity, String artistName) {
+        if (entity == null || "FALLBACK".equalsIgnoreCase(entity.getSource())) {
+            return null;
+        }
+
         ArtistStatsResponse res = new ArtistStatsResponse();
         res.setArtistId(entity.getArtist() != null ? entity.getArtist().getId() : null);
         res.setArtistName(artistName);
         res.setPlatform(entity.getPlatform());
         res.setChannelTitle(entity.getChannelTitle());
         res.setTotalViews(entity.getTotalViews());
-        res.setFormattedViews(ArtistStatsResponse.formatMetricCount(entity.getTotalViews()) + " lượt xem");
+        if (entity.getTotalViews() > 0) {
+            res.setFormattedViews(ArtistStatsResponse.formatMetricCount(entity.getTotalViews()) + " lượt xem");
+        } else {
+            res.setFormattedViews(null);
+        }
+
         res.setFollowersCount(entity.getFollowersCount());
-        res.setFormattedFollowers(ArtistStatsResponse.formatMetricCount(entity.getFollowersCount()) + " người theo dõi");
+        if (entity.getFollowersCount() > 0) {
+            res.setFormattedFollowers(ArtistStatsResponse.formatMetricCount(entity.getFollowersCount()) + " người theo dõi");
+        } else {
+            res.setFormattedFollowers(null);
+        }
+
         res.setVideoCount(entity.getVideoCount());
         res.setSource(entity.getSource());
         res.setLastFetchedAt(entity.getLastFetchedAt());
 
-        if (StringUtils.hasText(entity.getTopVideoTitle()) || StringUtils.hasText(entity.getTopVideoId())) {
+        // TopVideo is strictly for verified playable YouTube videos (never synthetic fallbacks or audio tracks)
+        if ("YouTube".equalsIgnoreCase(entity.getPlatform()) &&
+                StringUtils.hasText(entity.getTopVideoId()) &&
+                !isSyntheticVideoId(entity.getTopVideoId())) {
+            String embedUrl = StringUtils.hasText(entity.getTopVideoEmbedUrl()) ?
+                    entity.getTopVideoEmbedUrl() : YouTubeUrlHelper.buildEmbedUrl(entity.getTopVideoId());
             TopVideoResponse topVideo = new TopVideoResponse();
             topVideo.setVideoId(entity.getTopVideoId());
-            topVideo.setTitle(entity.getTopVideoTitle());
-            topVideo.setUrl(entity.getTopVideoUrl());
-            topVideo.setThumbnailUrl(entity.getTopVideoThumbnail());
+            topVideo.setTitle(StringUtils.hasText(entity.getTopVideoTitle()) ? entity.getTopVideoTitle() : "Video nổi bật");
+            topVideo.setUrl(StringUtils.hasText(entity.getTopVideoUrl()) ? entity.getTopVideoUrl() : YouTubeUrlHelper.buildWatchUrl(entity.getTopVideoId()));
+            topVideo.setThumbnailUrl(StringUtils.hasText(entity.getTopVideoThumbnail()) ? entity.getTopVideoThumbnail() : YouTubeUrlHelper.buildThumbnailUrl(entity.getTopVideoId()));
             topVideo.setViewCount(entity.getTopVideoViews());
-            topVideo.setFormattedViews(ArtistStatsResponse.formatMetricCount(entity.getTopVideoViews()) + " lượt xem");
-            topVideo.setEmbedUrl(entity.getTopVideoEmbedUrl());
+            if (entity.getTopVideoViews() > 0) {
+                topVideo.setFormattedViews(ArtistStatsResponse.formatMetricCount(entity.getTopVideoViews()) + " lượt xem");
+            } else {
+                topVideo.setFormattedViews(null);
+            }
+            topVideo.setEmbedUrl(embedUrl);
             topVideo.setPlatform(entity.getPlatform());
             res.setTopVideo(topVideo);
+        } else {
+            res.setTopVideo(null);
         }
 
         return res;

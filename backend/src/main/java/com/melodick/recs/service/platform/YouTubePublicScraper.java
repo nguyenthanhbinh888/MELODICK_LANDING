@@ -162,14 +162,20 @@ public class YouTubePublicScraper {
                 result.setSource("YOUTUBE_RSS");
                 result.setSuccess(true);
                 result.setChannelTitle(channelTitle);
-                result.setTotalViews(totalViewsSum > 0 ? totalViewsSum : (highestViews > 0 ? highestViews : 50000L));
+                result.setTotalViews(totalViewsSum > 0 ? totalViewsSum : (highestViews > 0 ? highestViews : 0L));
                 result.setVideoCount(entries.getLength());
                 result.setTopVideoId(topVideoId);
                 result.setTopVideoTitle(topVideoTitle);
                 result.setTopVideoUrl(YouTubeUrlHelper.buildWatchUrl(topVideoId));
                 result.setTopVideoEmbedUrl(YouTubeUrlHelper.buildEmbedUrl(topVideoId));
                 result.setTopVideoThumbnail(topVideoThumb);
-                result.setTopVideoViews(highestViews > 0 ? highestViews : 25000L);
+                result.setTopVideoViews(highestViews > 0 ? highestViews : 0L);
+
+                // Enrich with exact view count from watch page if RSS did not supply views
+                if (result.getTopVideoViews() <= 0) {
+                    enrichVideoViewsFromWatchPage(result, topVideoId);
+                }
+
                 return result;
             }
         } catch (Exception e) {

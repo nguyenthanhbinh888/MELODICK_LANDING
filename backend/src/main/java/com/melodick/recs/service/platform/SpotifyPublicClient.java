@@ -97,11 +97,11 @@ public class SpotifyPublicClient {
                 }
                 result.setTopVideoEmbedUrl(iframeUrl);
 
-                // Populate estimated streams based on title/artist hash when Web API key not present
-                long estStreams = 350000L + Math.abs((long) title.hashCode() % 950000L);
-                result.setTopVideoViews((long) (estStreams * 0.7));
-                result.setTotalViews(estStreams);
-                result.setFollowersCount(12000L + Math.abs((long) title.hashCode() % 35000L));
+                // Spotify public oEmbed does not expose play or view counts. Never fake numbers!
+                result.setTotalViews(0L);
+                result.setTopVideoViews(0L);
+                result.setFollowersCount(0L);
+                result.setVideoCount(0);
                 return result;
             }
         } catch (Exception e) {
@@ -154,9 +154,8 @@ public class SpotifyPublicClient {
                 result.setTopVideoUrl(topTrack.path("external_urls").path("spotify").asText());
                 result.setTopVideoEmbedUrl("https://open.spotify.com/embed/track/" + topTrack.path("id").asText());
                 result.setTopVideoThumbnail(topTrack.path("album").path("images").get(0).path("url").asText());
-                long popularity = topTrack.path("popularity").asLong(0L);
-                result.setTopVideoViews(popularity * 15000L); // Relative estimate
-                result.setTotalViews(popularity * 85000L);
+                result.setTopVideoViews(0L);
+                result.setTotalViews(0L);
             }
 
             return result;
