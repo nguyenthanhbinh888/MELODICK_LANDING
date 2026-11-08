@@ -31,12 +31,16 @@ assertEqual(getArtistMonogram('DJ Shadow'), 'DS', 'DJ Shadow should produce DS')
 assertEqual(getArtistMonogram('Kavinsky'), 'KA', 'Kavinsky should produce KA');
 assertEqual(getArtistMonogram('Skrillex'), 'SK', 'Skrillex should produce SK');
 assertEqual(getArtistMonogram('Deadmau5'), 'DE', 'Deadmau5 should produce DE');
+assertEqual(getArtistMonogram('Đạt G'), 'ĐG', 'Vietnamese Đạt G should produce ĐG');
+assertEqual(getArtistMonogram('Nguyễn Phonk'), 'NP', 'Vietnamese Nguyễn Phonk should produce NP');
+assertEqual(getArtistMonogram('Đỗ'), 'ĐỖ', 'Vietnamese Đỗ should produce ĐỖ');
+assertEqual(getArtistMonogram('Vũ'), 'VŨ', 'Vietnamese Vũ should produce VŨ');
 assertEqual(getArtistMonogram('A'), 'A', 'Single character should produce A');
 assertEqual(getArtistMonogram(''), 'ML', 'Empty string should fallback to ML');
 assertEqual(getArtistMonogram('   '), 'ML', 'Whitespace string should fallback to ML');
 assertEqual(getArtistMonogram(':-*'), 'ML', 'Symbols only should fallback to ML');
 assertEqual(getArtistMonogram('__--'), 'ML', 'Dashes only should fallback to ML');
-console.log('✓ getArtistMonogram passed all 15 tests');
+console.log('✓ getArtistMonogram passed all 19 tests');
 
 // 2. Archival Catalog Code Formatting Tests
 console.log('Testing formatCatalogCode...');
@@ -82,11 +86,20 @@ const artistSpotify: Artist = {
 };
 assertEqual(getArtistRoleTag(artistSpotify), 'EXCLUSIVE ARTIST // ELECTRONIC');
 
-const artistDefault: Artist = {
+const artistYouTube: Artist = {
   id: 4,
   name: 'Artist D',
   published: true,
   displayOrder: 4,
+  links: [{ platform: 'YouTube', url: 'https://youtube.com/@d', displayOrder: 1 }],
+};
+assertEqual(getArtistRoleTag(artistYouTube), 'AUDIOVISUAL ARTIST // BASS');
+
+const artistDefault: Artist = {
+  id: 5,
+  name: 'Artist E',
+  published: true,
+  displayOrder: 5,
   links: [],
 };
 assertEqual(getArtistRoleTag(artistDefault), 'RESIDENT ARTIST // BASS');
