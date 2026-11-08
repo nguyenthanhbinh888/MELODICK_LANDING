@@ -1,30 +1,41 @@
+:root {
+  --artist-card-max-w: 240px;
+  --artist-name-h: 54px;
+}
+
 .artist-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 40px;
-  margin-top: 40px;
-  margin-bottom: 100px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, var(--artist-card-max-w)));
+  justify-content: center;
+  gap: 32px;
+  margin: 30px auto 80px;
+  width: 100%;
 }
 
 .artist-card {
+  width: 100%;
+  max-width: var(--artist-card-max-w);
+  margin: 0 auto;
   background: rgba(12, 12, 14, 0.65);
   border: 1px solid var(--border-color);
-  border-radius: 18px;
+  border-radius: 16px;
   overflow: hidden;
   position: relative;
   cursor: pointer;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   transition: 
-    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-    filter 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 0.4s ease,
-    box-shadow 0.5s ease;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.35s ease,
+    box-shadow 0.45s ease;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
   user-select: none;
   outline: none;
   will-change: transform, filter, opacity;
+  display: flex;
+  flex-direction: column;
 }
 
 .artist-card:focus-visible {
@@ -32,23 +43,23 @@
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
 }
 
-/* 🌟 Focus Blur Spotlight Effect: Rê chuột vào 1 thẻ thì các thẻ còn lại mờ đi (blur) giống website cao cấp */
+/* 🌟 Focus Blur Spotlight Effect: Rê chuột vào 1 thẻ thì các thẻ còn lại mờ đi (blur) */
 @media (hover: hover) and (pointer: fine) {
   .artist-grid:hover .artist-card:not(:hover) {
-    filter: blur(4px) grayscale(25%);
-    opacity: 0.4;
-    transform: scale(0.96);
+    filter: blur(3.5px) grayscale(25%);
+    opacity: 0.45;
+    transform: scale(0.97);
   }
 
   .artist-card:hover {
-    transform: translateY(-10px) scale(1.03);
-    border-color: rgba(255, 255, 255, 0.45);
+    transform: translateY(-8px) scale(1.03);
+    border-color: rgba(255, 255, 255, 0.4);
     box-shadow: 
-      0 25px 50px -10px rgba(0, 0, 0, 0.95),
-      0 0 35px rgba(147, 51, 234, 0.28),
-      inset 0 1px 1px rgba(255, 255, 255, 0.25);
+      0 20px 45px -10px rgba(0, 0, 0, 0.95),
+      0 0 30px rgba(147, 51, 234, 0.25),
+      inset 0 1px 1px rgba(255, 255, 255, 0.2);
     z-index: 10;
-    filter: blur(0px) brightness(1.06);
+    filter: blur(0px) brightness(1.05);
     opacity: 1;
   }
 
@@ -77,7 +88,7 @@
   align-items: center;
   justify-content: center;
   color: #444444;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   position: relative;
   overflow: hidden;
 }
@@ -91,15 +102,22 @@
 }
 
 .artist-name {
-  padding: 24px 20px;
+  padding: 16px 14px;
   text-align: center;
   font-weight: 700;
-  font-size: 1.1rem;
-  letter-spacing: 2px;
+  font-size: 0.95rem;
+  letter-spacing: 1.5px;
   background: #0d0d0f;
   border-top: 1px solid var(--border-color);
   color: var(--text-main);
-  transition: background 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+  transition: background 0.35s ease, color 0.35s ease, border-color 0.35s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-height: var(--artist-name-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Overlay platform links với hiệu ứng kính mờ (Frosted Glass Blur) */
@@ -108,20 +126,20 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: calc(100% - 73px);
+  height: calc(100% - var(--artist-name-h));
   background: rgba(0, 0, 0, 0.58);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   transform: scale(0.96);
-  padding: 20px;
+  padding: 15px;
   z-index: 2;
 }
 
@@ -138,15 +156,15 @@
 .platform-link {
   color: #ffffff;
   text-decoration: none;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 600;
   border: 1px solid rgba(255, 255, 255, 0.35);
-  padding: 12px 24px;
-  border-radius: 30px;
-  letter-spacing: 1.5px;
+  padding: 9px 18px;
+  border-radius: 24px;
+  letter-spacing: 1.2px;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  width: 80%;
-  max-width: 220px;
+  width: 82%;
+  max-width: 180px;
   text-align: center;
   background: rgba(18, 18, 22, 0.65);
   backdrop-filter: blur(8px);
@@ -158,12 +176,12 @@
   background: #ffffff;
   color: #000000;
   border-color: #ffffff;
-  transform: scale(1.06);
-  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.35);
+  transform: scale(1.05);
+  box-shadow: 0 6px 18px rgba(255, 255, 255, 0.35);
 }
 
 .no-links-hint {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   letter-spacing: 1px;
 }
@@ -182,10 +200,60 @@
   color: #f87171;
 }
 
-@media (max-width: 768px) {
+/* Tablet và màn hình nhỏ */
+@media (max-width: 992px) {
   .artist-grid {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 25px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 210px));
+    gap: 24px;
+    margin-top: 25px;
+  }
+}
+
+/* Giao diện điện thoại (Mobile) - Bố cục 2 cột tiêu chuẩn như Spotify/Apple Music */
+@media (max-width: 640px) {
+  :root {
+    --artist-name-h: 46px;
+  }
+
+  .artist-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+    margin-bottom: 60px;
+  }
+
+  .artist-card {
+    max-width: 100%;
+    border-radius: 14px;
+  }
+
+  .artist-name {
+    padding: 12px 8px;
+    font-size: 0.82rem;
+    letter-spacing: 1px;
+  }
+
+  .artist-links-overlay {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .platform-link {
+    font-size: 0.7rem;
+    padding: 7px 12px;
+    width: 90%;
+    letter-spacing: 0.8px;
+  }
+}
+
+/* Màn hình điện thoại siêu nhỏ (<= 360px) */
+@media (max-width: 360px) {
+  .artist-grid {
+    gap: 10px;
+  }
+
+  .artist-name {
+    font-size: 0.75rem;
   }
 }
 
