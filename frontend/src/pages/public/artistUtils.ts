@@ -1,4 +1,4 @@
-import type { Artist } from '../../types';
+import type { Artist, ArtistLink } from '../../types';
 
 const SYNTHETIC_VIDEO_IDS = new Set(['kxpcV6650V4', '5qap5aO4i9A', 'CevxZvSJLk8']);
 
@@ -15,6 +15,130 @@ export const isValidUrl = (url?: string): boolean => {
     trimmed !== '#' &&
     (trimmed.startsWith('http://') || trimmed.startsWith('https://'))
   );
+};
+
+/**
+ * Formats video view counts into human-readable compact metrics (Vietnamese standard).
+ * Strictly used for real single highest-viewed video views (never averages, never fake).
+ * Examples:
+ * - 17,400 -> "17.4K lượt xem"
+ * - 1,250,000 -> "1.25M lượt xem"
+ * - 2,500,000,000 -> "2.5B lượt xem"
+ * - 950 -> "950 lượt xem"
+ * - 0 / null / undefined -> ""
+ */
+export const formatViewCount = (count?: number | null): string => {
+  if (count == null || count <= 0) return '';
+  if (count >= 1_000_000_000) {
+    const val = (count / 1_000_000_000).toFixed(2).replace(/\.?0+$/, '');
+    return `${val}B lượt xem`;
+  }
+  if (count >= 1_000_000) {
+    const val = (count / 1_000_000).toFixed(2).replace(/\.?0+$/, '');
+    return `${val}M lượt xem`;
+  }
+  if (count >= 1_000) {
+    const val = (count / 1_000).toFixed(1).replace(/\.?0+$/, '');
+    return `${val}K lượt xem`;
+  }
+  return `${count} lượt xem`;
+};
+
+export interface CardBadgeResult {
+  type: 'views' | 'platform' | 'none';
+  text?: string;
+  tooltip?: string;
+  badgeClass?: string;
+  dotClass?: string;
+}
+
+/**
+ * Resolves the top-right header metric pill for an artist card:
+ * 1. Strictly the real verified view count of the single highest-viewed video (if views > 0 and video is valid).
+ *    Never an average, never a channel total, and NEVER a fake number.
+ * 2. Otherwise, clean primary platform badge if artist has valid platform links.
+ * 3. Returns { type: 'none' } if no links or views are 0/null (no badge rendered).
+ */
+export const resolveCardBadge = (artist: Artist, validLinks: ArtistLink[] = []): CardBadgeResult => {
+  const stats = artist.stats;
+  const topVideo = stats?.topVideo;
+  const topVideoViews = topVideo?.viewCount ?? stats?.topVideoViews ?? 0;
+  const isTopVideoValid = Boolean(
+    topVideo &&
+    !isSyntheticVideo(topVideo.videoId) &&
+    topVideoViews > 0
+  );
+
+  // 1. Strictly the real verified view count of the single highest-viewed video
+  if (isTopVideoValid) {
+    const displayViews =
+      topVideo?.formattedViews ||
+      stats?.formattedTopVideoViews ||
+      formatViewCount(topVideoViews);
+
+    const tooltip = topVideo?.title
+      ? `Lượt xem video cao nhất (${topVideo.title}): ${topVideoViews.toLocaleString()} lượt xem`
+      : `Lượt xem video cao nhất: ${topVideoViews.toLocaleString()} lượt xem`;
+
+    return {
+      type: 'views',
+      text: displayViews,
+      tooltip,
+    };
+  }
+
+  // 2. Clean primary platform badge
+  if (validLinks.length > 0) {
+    const primaryPlatform = (stats?.platform || validLinks[0].platform || '').trim().toLowerCase();
+
+    if (primaryPlatform.includes('spotify')) {
+      return {
+        type: 'platform',
+        text: 'Spotify Artist',
+        tooltip: 'Nghệ sĩ trên Spotify',
+        badgeClass: 'spotify-badge',
+        dotClass: 'spotify-dot',
+      };
+    }
+    if (primaryPlatform.includes('soundcloud')) {
+      return {
+        type: 'platform',
+        text: 'SoundCloud Creator',
+        tooltip: 'Nghệ sĩ trên SoundCloud',
+        badgeClass: 'soundcloud-badge',
+        dotClass: 'soundcloud-dot',
+      };
+    }
+    if (primaryPlatform.includes('youtube')) {
+      return {
+        type: 'platform',
+        text: 'YouTube',
+        tooltip: 'Kênh YouTube',
+        badgeClass: 'youtube-badge',
+        dotClass: 'youtube-dot',
+      };
+    }
+    if (primaryPlatform.includes('instagram')) {
+      return {
+        type: 'platform',
+        text: 'Instagram',
+        tooltip: 'Instagram',
+        badgeClass: 'instagram-badge',
+        dotClass: 'instagram-dot',
+      };
+    }
+
+    return {
+      type: 'platform',
+      text: validLinks[0].platform,
+      tooltip: validLinks[0].platform,
+      badgeClass: 'default-badge',
+      dotClass: 'default-dot',
+    };
+  }
+
+  // 3. No links or views: return none
+  return { type: 'none' };
 };
 
 export const getPlatformActionLabel = (platform: string): string => {

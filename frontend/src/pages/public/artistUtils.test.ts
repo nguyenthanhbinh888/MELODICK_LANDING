@@ -6,6 +6,8 @@ import {
   isValidUrl,
   getPlatformDockClass,
   getPlatformActionLabel,
+  formatViewCount,
+  resolveCardBadge,
 } from './artistUtils.ts';
 import type { Artist } from '../../types/index.ts';
 
@@ -139,5 +141,139 @@ assertEqual(getPlatformActionLabel('Instagram'), 'Instagram');
 assertEqual(getPlatformActionLabel('TikTok'), 'TikTok');
 assertEqual(getPlatformActionLabel('Apple Music'), 'Apple Music');
 console.log('✓ Platform helpers passed all tests');
+
+// 6. Strict Top Video View Count Formatting Tests
+console.log('Testing formatViewCount...');
+assertEqual(formatViewCount(17400), '17.4K lượt xem', '17,400 should format to 17.4K lượt xem');
+assertEqual(formatViewCount(1250000), '1.25M lượt xem', '1,250,000 should format to 1.25M lượt xem');
+assertEqual(formatViewCount(1000000), '1M lượt xem', '1,000,000 should format to 1M lượt xem');
+assertEqual(formatViewCount(2500000000), '2.5B lượt xem', '2,500,000,000 should format to 2.5B lượt xem');
+assertEqual(formatViewCount(950), '950 lượt xem', '950 should format to 950 lượt xem');
+assertEqual(formatViewCount(1), '1 lượt xem', '1 should format to 1 lượt xem');
+assertEqual(formatViewCount(0), '', '0 views must produce empty string (no badge)');
+assertEqual(formatViewCount(-50), '', 'Negative views must produce empty string (no badge)');
+assertEqual(formatViewCount(null), '', 'Null views must produce empty string (no badge)');
+assertEqual(formatViewCount(undefined), '', 'Undefined views must produce empty string (no badge)');
+console.log('✓ formatViewCount passed all 10 tests');
+
+// 7. Strict Top Video Card Badge Resolution Tests
+console.log('Testing resolveCardBadge...');
+
+// 7a. Verified Top Video with Views > 0: MUST return 'views' badge with formatted string
+const artistWithTopVideo: Artist = {
+  id: 1,
+  name: 'MIRAGEMFXNK',
+  published: true,
+  displayOrder: 1,
+  links: [{ platform: 'YouTube', url: 'https://youtube.com/@mirage', displayOrder: 1 }],
+  stats: {
+    platform: 'YouTube',
+    totalViews: 5000000,
+    formattedViews: '5M lượt xem',
+    followersCount: 100000,
+    formattedFollowers: '100K người theo dõi',
+    videoCount: 15,
+    topVideo: {
+      videoId: 'realVid123',
+      title: 'Night Drift',
+      viewCount: 17400,
+      formattedViews: '17.4K lượt xem',
+    },
+  },
+};
+const badge1 = resolveCardBadge(artistWithTopVideo, artistWithTopVideo.links);
+assertEqual(badge1.type, 'views', 'Should resolve to views badge');
+assertEqual(badge1.text, '17.4K lượt xem', 'Should display top video views formatted');
+assertEqual(badge1.tooltip, 'Lượt xem video cao nhất (Night Drift): 17,400 lượt xem');
+
+// 7b. Channel Total Views > 0, BUT Top Video Views = 0: MUST NOT display views badge
+const artistZeroTopVideoViews: Artist = {
+  id: 2,
+  name: '411N:))',
+  published: true,
+  displayOrder: 2,
+  links: [{ platform: 'YouTube', url: 'https://youtube.com/@411n', displayOrder: 1 }],
+  stats: {
+    platform: 'YouTube',
+    totalViews: 800000, // Total channel views exist, but top video is 0
+    formattedViews: '800K lượt xem',
+    followersCount: 2000,
+    formattedFollowers: '2K người theo dõi',
+    videoCount: 2,
+    topVideo: {
+      videoId: 'zeroViewsVid',
+      title: 'New Track',
+      viewCount: 0,
+      formattedViews: undefined,
+    },
+  },
+};
+const badge2 = resolveCardBadge(artistZeroTopVideoViews, artistZeroTopVideoViews.links);
+assertEqual(badge2.type, 'platform', 'Zero top-video views must fallback to platform badge, NOT total channel views');
+assertEqual(badge2.text, 'YouTube');
+
+// 7c. Synthetic Video ID: MUST NOT display views badge even if views > 0
+const artistSyntheticVideo: Artist = {
+  id: 3,
+  name: 'SynthArtist',
+  published: true,
+  displayOrder: 3,
+  links: [{ platform: 'YouTube', url: 'https://youtube.com/@synth', displayOrder: 1 }],
+  stats: {
+    platform: 'YouTube',
+    totalViews: 999999,
+    formattedViews: '999K lượt xem',
+    followersCount: 1000,
+    formattedFollowers: '1K người theo dõi',
+    videoCount: 1,
+    topVideo: {
+      videoId: 'kxpcV6650V4', // Synthetic video ID!
+      title: 'Fake Video',
+      viewCount: 120000,
+      formattedViews: '120K lượt xem',
+    },
+  },
+};
+const badge3 = resolveCardBadge(artistSyntheticVideo, artistSyntheticVideo.links);
+assertEqual(badge3.type, 'platform', 'Synthetic video must be rejected from views badge');
+
+// 7d. Spotify artist without YouTube: displays Spotify Artist badge
+const artistSpotifyOnly: Artist = {
+  id: 4,
+  name: 'SPIDEX',
+  published: true,
+  displayOrder: 4,
+  links: [{ platform: 'Spotify', url: 'https://open.spotify.com/artist/spidex', displayOrder: 1 }],
+};
+const badge4 = resolveCardBadge(artistSpotifyOnly, artistSpotifyOnly.links);
+assertEqual(badge4.type, 'platform');
+assertEqual(badge4.text, 'Spotify Artist');
+assertEqual(badge4.badgeClass, 'spotify-badge');
+
+// 7e. SoundCloud artist: displays SoundCloud Creator badge
+const artistSoundCloudOnly: Artist = {
+  id: 5,
+  name: 'BassLord',
+  published: true,
+  displayOrder: 5,
+  links: [{ platform: 'SoundCloud', url: 'https://soundcloud.com/basslord', displayOrder: 1 }],
+};
+const badge5 = resolveCardBadge(artistSoundCloudOnly, artistSoundCloudOnly.links);
+assertEqual(badge5.type, 'platform');
+assertEqual(badge5.text, 'SoundCloud Creator');
+assertEqual(badge5.badgeClass, 'soundcloud-badge');
+
+// 7f. Artist with no links: displays NO badge ({ type: 'none' })
+const artistNoLinks: Artist = {
+  id: 6,
+  name: 'Unknown Producer',
+  published: true,
+  displayOrder: 6,
+  links: [],
+};
+const badge6 = resolveCardBadge(artistNoLinks, []);
+assertEqual(badge6.type, 'none', 'Artist with no links must display no badge');
+
+console.log('✓ resolveCardBadge passed all 6 test scenarios');
 
 console.log('🎉 ALL UNIT TESTS PASSED SUCCESSFULLY! 🎉');
