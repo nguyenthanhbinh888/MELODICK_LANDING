@@ -154,7 +154,17 @@ assertEqual(formatViewCount(0), '', '0 views must produce empty string (no badge
 assertEqual(formatViewCount(-50), '', 'Negative views must produce empty string (no badge)');
 assertEqual(formatViewCount(null), '', 'Null views must produce empty string (no badge)');
 assertEqual(formatViewCount(undefined), '', 'Undefined views must produce empty string (no badge)');
-console.log('✓ formatViewCount passed all 10 tests');
+assertEqual(formatViewCount(NaN), '', 'NaN views must produce empty string (no badge)');
+assertEqual(formatViewCount(Infinity), '', 'Infinity views must produce empty string (no badge)');
+assertEqual(formatViewCount(-Infinity), '', '-Infinity views must produce empty string (no badge)');
+// Boundary rounding checks: must never produce "1000K" or "1000M"
+assertEqual(formatViewCount(999949), '999.9K lượt xem', '999,949 should format to 999.9K lượt xem');
+assertEqual(formatViewCount(999950), '1M lượt xem', '999,950 must round up to 1M lượt xem, NOT 1000K');
+assertEqual(formatViewCount(999999), '1M lượt xem', '999,999 must round up to 1M lượt xem, NOT 1000K');
+assertEqual(formatViewCount(999949999), '999.95M lượt xem', '999,949,999 should format to 999.95M lượt xem');
+assertEqual(formatViewCount(999950000), '1B lượt xem', '999,950,000 must round up to 1B lượt xem, NOT 1000M');
+assertEqual(formatViewCount(14500000000), '14.5B lượt xem', '14,500,000,000 should format to 14.5B lượt xem');
+console.log('✓ formatViewCount passed all 19 tests');
 
 // 7. Strict Top Video Card Badge Resolution Tests
 console.log('Testing resolveCardBadge...');
@@ -274,6 +284,53 @@ const artistNoLinks: Artist = {
 const badge6 = resolveCardBadge(artistNoLinks, []);
 assertEqual(badge6.type, 'none', 'Artist with no links must display no badge');
 
-console.log('✓ resolveCardBadge passed all 6 test scenarios');
+// 7g. Robustness: topVideoViews present directly on stats even if topVideo object is null
+const artistTopVideoViewsOnStatsOnly: Artist = {
+  id: 7,
+  name: 'AudioPhonk',
+  published: true,
+  displayOrder: 7,
+  links: [{ platform: 'YouTube', url: 'https://youtube.com/@audiophonk', displayOrder: 1 }],
+  stats: {
+    platform: 'YouTube',
+    totalViews: 600000,
+    formattedViews: '600K lượt xem',
+    topVideoViews: 45000,
+    formattedTopVideoViews: '45K lượt xem',
+    followersCount: 1200,
+    formattedFollowers: '1.2K người theo dõi',
+    videoCount: 5,
+    topVideo: undefined, // omitted topVideo object
+  },
+};
+const badge7 = resolveCardBadge(artistTopVideoViewsOnStatsOnly, artistTopVideoViewsOnStatsOnly.links);
+assertEqual(badge7.type, 'views', 'Should resolve to views badge even when topVideo object is omitted');
+assertEqual(badge7.text, '45K lượt xem');
+
+// 7h. Robustness: topVideo present with viewCount but videoId omitted
+const artistTopVideoWithoutId: Artist = {
+  id: 8,
+  name: 'BassEcho',
+  published: true,
+  displayOrder: 8,
+  links: [{ platform: 'YouTube', url: 'https://youtube.com/@bassecho', displayOrder: 1 }],
+  stats: {
+    platform: 'YouTube',
+    totalViews: 300000,
+    formattedViews: '300K lượt xem',
+    followersCount: 500,
+    formattedFollowers: '500 người theo dõi',
+    videoCount: 3,
+    topVideo: {
+      title: 'Deep Bass Track',
+      viewCount: 28000,
+    },
+  },
+};
+const badge8 = resolveCardBadge(artistTopVideoWithoutId, artistTopVideoWithoutId.links);
+assertEqual(badge8.type, 'views', 'Should resolve to views badge when videoId is not set');
+assertEqual(badge8.text, '28K lượt xem');
+
+console.log('✓ resolveCardBadge passed all 8 test scenarios');
 
 console.log('🎉 ALL UNIT TESTS PASSED SUCCESSFULLY! 🎉');

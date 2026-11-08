@@ -239,5 +239,12 @@ class PlatformStatsServiceTest {
         assertEquals("2.5B", ArtistStatsResponse.formatMetricCount(2500000000L));
         assertEquals("0", ArtistStatsResponse.formatMetricCount(0L));
         assertEquals("0", ArtistStatsResponse.formatMetricCount(null));
+        // Boundary rounding checks: must never produce "1000K" or "1000M"
+        assertEquals("999.9K", ArtistStatsResponse.formatMetricCount(999949L));
+        assertEquals("1M", ArtistStatsResponse.formatMetricCount(999950L));
+        assertEquals("1M", ArtistStatsResponse.formatMetricCount(999999L));
+        assertEquals("999.95M", ArtistStatsResponse.formatMetricCount(999949999L));
+        assertEquals("1B", ArtistStatsResponse.formatMetricCount(999950000L));
+        assertEquals("14.5B", ArtistStatsResponse.formatMetricCount(14500000000L));
     }
 }
