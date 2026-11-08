@@ -189,6 +189,15 @@ export const ArtistsPage: React.FC = () => {
     }
   };
 
+  const getEmbedUrlWithAutoplay = (rawUrl?: string) => {
+    if (!rawUrl) return '';
+    if (rawUrl.includes('youtube.com/embed/')) {
+      const separator = rawUrl.includes('?') ? '&' : '?';
+      return `${rawUrl}${separator}autoplay=1&rel=0`;
+    }
+    return rawUrl;
+  };
+
   return (
     <section className="public-page-section" id="artists">
       {loading ? (
@@ -222,7 +231,7 @@ export const ArtistsPage: React.FC = () => {
                 aria-expanded={isActive}
               >
                 {/* 🌟 Views Metric Pill / Badge */}
-                {stats?.formattedViews && (
+                {stats && stats.formattedViews && stats.formattedViews !== '0 lượt xem' && (
                   <div
                     className="artist-views-badge"
                     title={`Tổng lượt xem nền tảng: ${stats.totalViews ? stats.totalViews.toLocaleString() : stats.formattedViews}`}
@@ -325,7 +334,7 @@ export const ArtistsPage: React.FC = () => {
             <div className="top-video-player-container">
               {modalArtist.stats.topVideo.embedUrl ? (
                 <iframe
-                  src={modalArtist.stats.topVideo.embedUrl}
+                  src={getEmbedUrlWithAutoplay(modalArtist.stats.topVideo.embedUrl)}
                   title={modalArtist.stats.topVideo.title}
                   className="top-video-iframe"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

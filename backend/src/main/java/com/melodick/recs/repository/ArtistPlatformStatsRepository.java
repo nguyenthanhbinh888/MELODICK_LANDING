@@ -13,10 +13,10 @@ import java.util.Optional;
 @Repository
 public interface ArtistPlatformStatsRepository extends JpaRepository<ArtistPlatformStats, Long> {
 
-    @Query("SELECT s FROM ArtistPlatformStats s WHERE s.artist.id = :artistId")
+    @Query("SELECT s FROM ArtistPlatformStats s JOIN FETCH s.artist WHERE s.artist.id = :artistId")
     Optional<ArtistPlatformStats> findByArtistId(@Param("artistId") Long artistId);
 
-    @Query("SELECT s FROM ArtistPlatformStats s WHERE s.artist.id IN :artistIds")
+    @Query("SELECT s FROM ArtistPlatformStats s JOIN FETCH s.artist WHERE s.artist.id IN :artistIds")
     List<ArtistPlatformStats> findAllByArtistIdIn(@Param("artistIds") Collection<Long> artistIds);
 
     void deleteByArtistId(Long artistId);

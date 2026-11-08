@@ -35,6 +35,9 @@ public class Artist {
     @OrderBy("displayOrder ASC")
     private List<ArtistLink> links = new ArrayList<>();
 
+    @OneToOne(mappedBy = "artist", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private ArtistPlatformStats platformStats;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -91,6 +94,14 @@ public class Artist {
     public void clearLinks() {
         for (ArtistLink link : new ArrayList<>(links)) {
             removeLink(link);
+        }
+    }
+
+    public ArtistPlatformStats getPlatformStats() { return platformStats; }
+    public void setPlatformStats(ArtistPlatformStats platformStats) {
+        this.platformStats = platformStats;
+        if (platformStats != null) {
+            platformStats.setArtist(this);
         }
     }
 

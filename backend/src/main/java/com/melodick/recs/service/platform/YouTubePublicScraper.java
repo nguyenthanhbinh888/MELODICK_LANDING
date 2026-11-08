@@ -26,7 +26,10 @@ public class YouTubePublicScraper {
 
     private static final Logger log = LoggerFactory.getLogger(YouTubePublicScraper.class);
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
-    private static final Pattern CHANNEL_ID_HTML_PATTERN = Pattern.compile("(?:channelId[\"']?\\s*:\\s*[\"']|<meta itemprop=[\"']channelId[\"'] content=[\"'])(UC[a-zA-Z0-9_-]{22})[\"']");
+    private static final Pattern CHANNEL_ID_HTML_PATTERN = Pattern.compile(
+            "(?:\"browseId\"\\s*:\\s*\"|\"externalId\"\\s*:\\s*\"|canonical\"\\s*href=[\"']https://www\\.youtube\\.com/channel/|youtube\\.com/channel/|(?:channelId[\"']?\\s*:\\s*[\"']|<meta itemprop=[\"']channelId[\"'] content=[\"']))(UC[a-zA-Z0-9_-]{22})[\"'/]?"
+    );
+    private static final Pattern VIDEO_VIEWS_HTML_PATTERN = Pattern.compile("\"viewCount\"\\s*:\\s*\"(\\d+)\"");
 
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
@@ -197,12 +200,39 @@ public class YouTubePublicScraper {
                 result.setTopVideoUrl(watchUrl);
                 result.setTopVideoEmbedUrl(YouTubeUrlHelper.buildEmbedUrl(videoId));
                 result.setTopVideoThumbnail(node.path("thumbnail_url").asText(YouTubeUrlHelper.buildThumbnailUrl(videoId)));
+
+                // Enrich with exact view count from watch page HTML
+                enrichVideoViewsFromWatchPage(result, videoId);
+
                 return result;
             }
         } catch (Exception e) {
             log.debug("YouTube oEmbed failed for video [{}]: {}", videoId, e.getMessage());
         }
         return PlatformFetchResult.failed("YouTube", "OEMBED");
+    }
+
+    private void enrichVideoViewsFromWatchPage(PlatformFetchResult result, String videoId) {
+        try {
+            String watchUrl = YouTubeUrlHelper.buildWatchUrl(videoId);
+            String html = restClient.get()
+                    .uri(watchUrl)
+                    .retrieve()
+                    .body(String.class);
+
+            if (StringUtils.hasText(html)) {
+                Matcher matcher = VIDEO_VIEWS_HTML_PATTERN.matcher(html);
+                if (matcher.find()) {
+                    long views = Long.parseLong(matcher.group(1));
+                    if (views > 0) {
+                        result.setTopVideoViews(views);
+                        result.setTotalViews(views);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Watch page view count scraping failed for video [{}]: {}", videoId, e.getMessage());
+        }
     }
 
     private String resolveHandleToChannelId(String handle) {
@@ -219,6 +249,21 @@ public class YouTubePublicScraper {
                 Matcher matcher = CHANNEL_ID_HTML_PATTERN.matcher(html);
                 if (matcher.find()) {
                     return matcher.group(1);
+                }
+            }
+
+            // Fallback for custom / vanity URLs without @
+            if (!handle.startsWith("@")) {
+                String altUrl = "https://www.youtube.com/c/" + handle;
+                String altHtml = restClient.get()
+                        .uri(altUrl)
+                        .retrieve()
+                        .body(String.class);
+                if (StringUtils.hasText(altHtml)) {
+                    Matcher altMatcher = CHANNEL_ID_HTML_PATTERN.matcher(altHtml);
+                    if (altMatcher.find()) {
+                        return altMatcher.group(1);
+                    }
                 }
             }
         } catch (Exception e) {
