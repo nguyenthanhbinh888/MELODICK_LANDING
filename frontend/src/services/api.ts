@@ -2,9 +2,11 @@ import type {
   AdminUser,
   Artist,
   ArtistInput,
+  ArtistStats,
   AuthResponse,
   DashboardStats,
   SiteSettings,
+  TopVideo,
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || '';
@@ -85,6 +87,12 @@ export const publicApi = {
   getArtists: async (): Promise<Artist[]> => {
     return request<Artist[]>('/api/public/artists');
   },
+  getArtistStats: async (artistId: number, refresh = false): Promise<ArtistStats> => {
+    return request<ArtistStats>(`/api/public/artists/${artistId}/stats?refresh=${refresh}`);
+  },
+  getArtistTopVideo: async (artistId: number): Promise<TopVideo> => {
+    return request<TopVideo>(`/api/public/artists/${artistId}/top-video`);
+  },
 };
 
 // 2. ADMIN AUTH API
@@ -157,6 +165,14 @@ export const adminArtistsApi = {
       method: 'PUT',
       body: JSON.stringify({ orders }),
     });
+  },
+  refreshStats: async (id: number): Promise<ArtistStats> => {
+    return request<ArtistStats>(`/api/admin/artists/${id}/refresh-stats`, {
+      method: 'POST',
+    });
+  },
+  getStats: async (id: number): Promise<ArtistStats> => {
+    return request<ArtistStats>(`/api/admin/artists/${id}/stats`);
   },
 };
 

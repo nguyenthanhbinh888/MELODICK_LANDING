@@ -14,6 +14,8 @@ import {
   Loader2,
   Upload,
   Link as LinkIcon,
+  RefreshCw,
+  Flame,
 } from 'lucide-react';
 import type { Artist, ArtistInput } from '../../types';
 import { adminArtistsApi, adminUploadApi } from '../../services/api';
@@ -47,6 +49,9 @@ export const AdminArtistsPage: React.FC = () => {
 
   // Delete modal state
   const [deletingArtist, setDeletingArtist] = useState<Artist | null>(null);
+
+  // Platform stats refresh state
+  const [refreshingStatsIds, setRefreshingStatsIds] = useState<Record<number, boolean>>({});
 
   // Form state
   const [formData, setFormData] = useState<ArtistInput>({
@@ -120,6 +125,24 @@ export const AdminArtistsPage: React.FC = () => {
 
   const handleRemoveImage = () => {
     setFormData((prev) => ({ ...prev, imageUrl: '' }));
+  };
+
+  const handleRefreshStats = async (artistId: number) => {
+    setRefreshingStatsIds((prev) => ({ ...prev, [artistId]: true }));
+    try {
+      const updatedStats = await adminArtistsApi.refreshStats(artistId);
+      setArtists((prev) =>
+        prev.map((a) => (a.id === artistId ? { ...a, stats: updatedStats } : a))
+      );
+      showNotification('success', 'Đã cập nhật chỉ số lượt xem & video hot thành công!');
+    } catch (err: unknown) {
+      showNotification(
+        'error',
+        err instanceof Error ? err.message : 'Không thể làm mới chỉ số nền tảng'
+      );
+    } finally {
+      setRefreshingStatsIds((prev) => ({ ...prev, [artistId]: false }));
+    }
   };
 
   const handleOpenAddModal = () => {
@@ -311,10 +334,11 @@ export const AdminArtistsPage: React.FC = () => {
           <table className="admin-table">
             <thead>
               <tr>
-                <th style={{ width: '80px' }}>Thứ tự</th>
-                <th style={{ width: '80px' }}>Ảnh</th>
+                <th style={{ width: '70px' }}>Thứ tự</th>
+                <th style={{ width: '70px' }}>Ảnh</th>
                 <th>Tên Nghệ sĩ</th>
                 <th>Trạng thái</th>
+                <th>Chỉ số Lượt xem & Video Hot</th>
                 <th>Số liên kết</th>
                 <th style={{ textAlign: 'right' }}>Thao tác</th>
               </tr>
@@ -356,6 +380,35 @@ export const AdminArtistsPage: React.FC = () => {
                         </>
                       )}
                     </button>
+                  </td>
+                  <td>
+                    <div className="admin-stats-cell">
+                      {artist.stats ? (
+                        <div className="admin-stats-info">
+                          <span className="admin-views-tag" title={`Tổng lượt xem: ${artist.stats.totalViews.toLocaleString()}`}>
+                            👁️ {artist.stats.formattedViews || `${artist.stats.totalViews.toLocaleString()} views`}
+                          </span>
+                          {artist.stats.topVideo && (
+                            <span className="admin-topvideo-tag" title={artist.stats.topVideo.title}>
+                              <Flame size={12} className="admin-flame-icon" />
+                              <span className="admin-topvideo-title">{artist.stats.topVideo.title}</span>
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="admin-no-stats">Chưa có chỉ số</span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleRefreshStats(artist.id)}
+                        disabled={refreshingStatsIds[artist.id]}
+                        className="admin-refresh-stats-btn"
+                        title="Đồng bộ / làm mới số liệu từ API công khai"
+                      >
+                        <RefreshCw size={12} className={refreshingStatsIds[artist.id] ? 'spin-icon' : ''} />
+                        <span>{refreshingStatsIds[artist.id] ? 'Đang tải...' : 'Làm mới'}</span>
+                      </button>
+                    </div>
                   </td>
                   <td>
                     <span className="links-count-pill">

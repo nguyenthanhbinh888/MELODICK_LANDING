@@ -1,11 +1,11 @@
 package com.melodick.recs.controller;
 
 import com.melodick.recs.dto.response.ArtistResponse;
+import com.melodick.recs.dto.response.ArtistStatsResponse;
+import com.melodick.recs.dto.response.TopVideoResponse;
 import com.melodick.recs.service.PublicService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -29,5 +29,16 @@ public class PublicController {
     public ResponseEntity<List<ArtistResponse>> getPublishedArtists() {
         return ResponseEntity.ok(publicService.getPublishedArtists());
     }
-}
 
+    @GetMapping("/artists/{id}/stats")
+    public ResponseEntity<ArtistStatsResponse> getArtistStats(
+            @PathVariable Long id,
+            @RequestParam(value = "refresh", defaultValue = "false") boolean refresh) {
+        return ResponseEntity.ok(publicService.getArtistStats(id, refresh));
+    }
+
+    @GetMapping("/artists/{id}/top-video")
+    public ResponseEntity<TopVideoResponse> getArtistTopVideo(@PathVariable Long id) {
+        return ResponseEntity.ok(publicService.getArtistTopVideo(id));
+    }
+}
