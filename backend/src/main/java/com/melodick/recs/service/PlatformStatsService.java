@@ -78,7 +78,8 @@ public class PlatformStatsService {
         List<ArtistPlatformStats> cachedList = statsRepository.findAllByArtistIdIn(artistIds);
 
         Map<Long, ArtistPlatformStats> statsByArtistId = cachedList.stream()
-                .collect(Collectors.toMap(s -> s.getArtist().getId(), s -> s));
+                .filter(s -> s.getArtist() != null && s.getArtist().getId() != null)
+                .collect(Collectors.toMap(s -> s.getArtist().getId(), s -> s, (s1, s2) -> s1));
 
         Map<Long, ArtistStatsResponse> responseMap = new HashMap<>();
 
@@ -147,12 +148,20 @@ public class PlatformStatsService {
         return stats.getLastFetchedAt().isAfter(expirationThreshold);
     }
 
+    private boolean isUsableLink(ArtistLink link) {
+        if (link == null || !StringUtils.hasText(link.getUrl())) {
+            return false;
+        }
+        String trimmed = link.getUrl().trim();
+        return !trimmed.equals("#") && !trimmed.equalsIgnoreCase("none") && !trimmed.equalsIgnoreCase("null");
+    }
+
     private ArtistPlatformStats refreshAndSaveStats(Artist artist, ArtistPlatformStats existing) {
         PlatformFetchResult fetchResult = null;
         List<ArtistLink> links = artist.getLinks();
 
         // Check if artist has any valid links
-        if (links == null || links.stream().noneMatch(l -> StringUtils.hasText(l.getUrl()) && !l.getUrl().trim().equals("#"))) {
+        if (links == null || links.stream().noneMatch(this::isUsableLink)) {
             if (existing != null) {
                 statsRepository.delete(existing);
             }
@@ -161,7 +170,10 @@ public class PlatformStatsService {
 
         // 1. First priority: YouTube link
         Optional<ArtistLink> ytLink = links.stream()
-                .filter(l -> l.getPlatform() != null && l.getPlatform().equalsIgnoreCase("YouTube") && StringUtils.hasText(l.getUrl()) && !l.getUrl().trim().equals("#"))
+                .filter(l -> isUsableLink(l) && (
+                        (l.getPlatform() != null && l.getPlatform().trim().equalsIgnoreCase("YouTube"))
+                        || YouTubeUrlHelper.isYouTubeUrl(l.getUrl())
+                ))
                 .findFirst();
 
         if (ytLink.isPresent()) {
@@ -179,7 +191,10 @@ public class PlatformStatsService {
         // 2. Second priority: Spotify link
         if (fetchResult == null || !fetchResult.isSuccess()) {
             Optional<ArtistLink> spLink = links.stream()
-                    .filter(l -> l.getPlatform() != null && l.getPlatform().equalsIgnoreCase("Spotify") && StringUtils.hasText(l.getUrl()) && !l.getUrl().trim().equals("#"))
+                    .filter(l -> isUsableLink(l) && (
+                            (l.getPlatform() != null && l.getPlatform().trim().equalsIgnoreCase("Spotify"))
+                            || (l.getUrl() != null && l.getUrl().toLowerCase().contains("spotify.com"))
+                    ))
                     .findFirst();
 
             if (spLink.isPresent()) {
@@ -190,7 +205,10 @@ public class PlatformStatsService {
         // 3. Third priority: SoundCloud link
         if (fetchResult == null || !fetchResult.isSuccess()) {
             Optional<ArtistLink> scLink = links.stream()
-                    .filter(l -> l.getPlatform() != null && l.getPlatform().equalsIgnoreCase("SoundCloud") && StringUtils.hasText(l.getUrl()) && !l.getUrl().trim().equals("#"))
+                    .filter(l -> isUsableLink(l) && (
+                            (l.getPlatform() != null && l.getPlatform().trim().equalsIgnoreCase("SoundCloud"))
+                            || (l.getUrl() != null && l.getUrl().toLowerCase().contains("soundcloud.com"))
+                    ))
                     .findFirst();
 
             if (scLink.isPresent()) {
