@@ -70,8 +70,10 @@ class PlatformStatsServiceTest {
         cached.setChannelTitle("MIRAGEMFXNK Official");
         cached.setTotalViews(1840000L);
         cached.setFollowersCount(42000L);
+        cached.setTopVideoId("nightDriftVid");
         cached.setTopVideoTitle("NIGHT DRIFT");
         cached.setTopVideoViews(1200000L);
+        cached.setSource("YOUTUBE_API");
         cached.setLastFetchedAt(LocalDateTime.now().minusMinutes(30)); // 30 mins old, valid within 120 mins
 
         when(artistRepository.findById(1L)).thenReturn(Optional.of(artist));
@@ -123,21 +125,34 @@ class PlatformStatsServiceTest {
     }
 
     @Test
-    void getArtistStats_OfflineFallback_GeneratesRealisticStats() {
+    void getArtistStats_WhenScrapingFails_ReturnsNullAndDoesNotGenerateFakeData() {
         when(artistRepository.findById(1L)).thenReturn(Optional.of(artist));
         when(statsRepository.findByArtistId(1L)).thenReturn(Optional.empty());
         when(youTubeApiClient.isConfigured()).thenReturn(false);
         when(youTubePublicScraper.fetchStats(anyString())).thenReturn(PlatformFetchResult.failed("YouTube", "YOUTUBE_RSS"));
-        when(statsRepository.save(any(ArtistPlatformStats.class))).thenAnswer(i -> i.getArgument(0));
 
         ArtistStatsResponse response = platformStatsService.getArtistStats(1L, false);
 
-        assertNotNull(response);
-        assertTrue(response.getTotalViews() > 0);
-        assertTrue(response.getFollowersCount() > 0);
-        assertEquals("FALLBACK", response.getSource());
-        assertNotNull(response.getTopVideo());
-        assertTrue(response.getTopVideo().getTitle().contains("MIRAGEMFXNK"));
+        assertNull(response, "Stats should be null when scraping fails — no fake data should be generated");
+        verify(statsRepository, never()).save(any(ArtistPlatformStats.class));
+    }
+
+    @Test
+    void getArtistStats_WhenArtistHasNoLinks_ReturnsNullWithoutScraping() {
+        Artist emptyLinksArtist = new Artist();
+        emptyLinksArtist.setId(2L);
+        emptyLinksArtist.setName("SPIDEX");
+
+        when(artistRepository.findById(2L)).thenReturn(Optional.of(emptyLinksArtist));
+        when(statsRepository.findByArtistId(2L)).thenReturn(Optional.empty());
+
+        ArtistStatsResponse response = platformStatsService.getArtistStats(2L, false);
+
+        assertNull(response, "Artist without links must have null stats");
+        verifyNoInteractions(youTubePublicScraper);
+        verifyNoInteractions(spotifyPublicClient);
+        verifyNoInteractions(soundCloudPublicClient);
+        verify(statsRepository, never()).save(any(ArtistPlatformStats.class));
     }
 
     @Test

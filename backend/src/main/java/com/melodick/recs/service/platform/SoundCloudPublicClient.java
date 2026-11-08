@@ -64,10 +64,11 @@ public class SoundCloudPublicClient {
                     }
                 }
 
-                long estPlays = 250000L + Math.abs((long) title.hashCode() % 650000L);
-                result.setTopVideoViews((long) (estPlays * 0.75));
-                result.setTotalViews(estPlays);
-                result.setFollowersCount(8500L + Math.abs((long) title.hashCode() % 25000L));
+                // SoundCloud public oEmbed does not expose play or view counts. Never fake numbers!
+                result.setTotalViews(0L);
+                result.setTopVideoViews(0L);
+                result.setFollowersCount(0L);
+                result.setVideoCount(0);
                 return result;
             }
         } catch (Exception e) {

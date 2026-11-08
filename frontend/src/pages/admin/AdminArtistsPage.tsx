@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import {
   Plus,
   Search,
@@ -63,7 +63,7 @@ export const AdminArtistsPage: React.FC = () => {
     links: [],
   });
 
-  const fetchArtists = async () => {
+  const fetchArtists = useCallback(async () => {
     setLoading(true);
     try {
       const data = await adminArtistsApi.getAll(search);
@@ -76,11 +76,11 @@ export const AdminArtistsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search]);
 
   useEffect(() => {
     fetchArtists();
-  }, [search]);
+  }, [fetchArtists]);
 
   const showNotification = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
@@ -385,15 +385,22 @@ export const AdminArtistsPage: React.FC = () => {
                   </td>
                   <td>
                     <div className="admin-stats-cell">
-                      {artist.stats ? (
+                      {artist.stats && (artist.stats.totalViews > 0 || artist.stats.topVideo || artist.stats.followersCount > 0) ? (
                         <div className="admin-stats-info">
-                          <span className="admin-views-tag" title={`Tổng lượt xem: ${artist.stats.totalViews.toLocaleString()}`}>
-                            👁️ {artist.stats.formattedViews || `${artist.stats.totalViews.toLocaleString()} views`}
-                          </span>
+                          {artist.stats.totalViews > 0 && (
+                            <span className="admin-views-tag" title={`Tổng lượt xem: ${artist.stats.totalViews.toLocaleString()}`}>
+                              👁️ {artist.stats.formattedViews || `${artist.stats.totalViews.toLocaleString()} views`}
+                            </span>
+                          )}
                           {artist.stats.topVideo && (
                             <span className="admin-topvideo-tag" title={artist.stats.topVideo.title}>
                               <Flame size={12} className="admin-flame-icon" />
                               <span className="admin-topvideo-title">{artist.stats.topVideo.title}</span>
+                            </span>
+                          )}
+                          {artist.stats.followersCount > 0 && (
+                            <span className="admin-followers-tag" title={`Người theo dõi: ${artist.stats.followersCount.toLocaleString()}`}>
+                              👥 {artist.stats.formattedFollowers || `${artist.stats.followersCount.toLocaleString()} followers`}
                             </span>
                           )}
                         </div>
