@@ -64,6 +64,7 @@ public class ArtistStatsResponse {
 
     /**
      * Utility helper to format counts into compact strings: e.g. 1,250,000 -> "1.25M", 2,500,000,000 -> "2.5B"
+     * Handles boundary rounding thresholds (e.g. 999,950 -> "1M", 999,950,000 -> "1B") to prevent "1000K" / "1000M".
      */
     public static String formatMetricCount(Long count) {
         if (count == null || count <= 0) return "0";
@@ -71,9 +72,15 @@ public class ArtistStatsResponse {
             String val = String.format(java.util.Locale.US, "%.2f", count / 1_000_000_000.0);
             return cleanTrailingZeros(val) + "B";
         }
+        if (count >= 999_950_000L) {
+            return "1B";
+        }
         if (count >= 1_000_000L) {
             String val = String.format(java.util.Locale.US, "%.2f", count / 1_000_000.0);
             return cleanTrailingZeros(val) + "M";
+        }
+        if (count >= 999_950L) {
+            return "1M";
         }
         if (count >= 1_000L) {
             String val = String.format(java.util.Locale.US, "%.1f", count / 1_000.0);

@@ -28,20 +28,26 @@ export const isValidUrl = (url?: string): boolean => {
  * - 0 / null / undefined -> ""
  */
 export const formatViewCount = (count?: number | null): string => {
-  if (count == null || count <= 0) return '';
+  if (count == null || !Number.isFinite(count) || count <= 0) return '';
   if (count >= 1_000_000_000) {
     const val = (count / 1_000_000_000).toFixed(2).replace(/\.?0+$/, '');
     return `${val}B lượt xem`;
+  }
+  if (count >= 999_950_000) {
+    return '1B lượt xem';
   }
   if (count >= 1_000_000) {
     const val = (count / 1_000_000).toFixed(2).replace(/\.?0+$/, '');
     return `${val}M lượt xem`;
   }
+  if (count >= 999_950) {
+    return '1M lượt xem';
+  }
   if (count >= 1_000) {
     const val = (count / 1_000).toFixed(1).replace(/\.?0+$/, '');
     return `${val}K lượt xem`;
   }
-  return `${count} lượt xem`;
+  return `${Math.round(count)} lượt xem`;
 };
 
 export interface CardBadgeResult {
@@ -63,11 +69,8 @@ export const resolveCardBadge = (artist: Artist, validLinks: ArtistLink[] = []):
   const stats = artist.stats;
   const topVideo = stats?.topVideo;
   const topVideoViews = topVideo?.viewCount ?? stats?.topVideoViews ?? 0;
-  const isTopVideoValid = Boolean(
-    topVideo &&
-    !isSyntheticVideo(topVideo.videoId) &&
-    topVideoViews > 0
-  );
+  const isSynthetic = Boolean(topVideo?.videoId && isSyntheticVideo(topVideo.videoId));
+  const isTopVideoValid = !isSynthetic && topVideoViews > 0;
 
   // 1. Strictly the real verified view count of the single highest-viewed video
   if (isTopVideoValid) {
@@ -217,6 +220,7 @@ export const getArtistMonogram = (name: string): string => {
 };
 
 /**
+ * @deprecated Removed from UI card header per user design requirements. Kept for utility.
  * Formats the Archival Catalog Code (Boiler Room & Warp Records inspired)
  * e.g. "MLDK // 01", "MLDK // 02"
  */
