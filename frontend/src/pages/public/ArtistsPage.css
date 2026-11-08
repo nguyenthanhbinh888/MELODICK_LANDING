@@ -1,6 +1,29 @@
 :root {
+  /* Concept 1: The Cyber-Cassette & Archival Dubplate Tokens */
+  --artist-card-bg: rgba(12, 12, 16, 0.72);
+  --artist-card-border: rgba(255, 255, 255, 0.08);
+  --artist-card-border-hover: rgba(168, 85, 247, 0.65);
+  --artist-card-radius: 16px;
+
+  /* Quầng sáng Tím Lỏng & Obsidian Glow */
+  --aura-violet: rgba(147, 51, 234, 0.35);
+  --aura-spotlight: 0 20px 45px -10px rgba(0, 0, 0, 0.95), 0 0 35px var(--aura-violet);
+
+  /* Nút bấm Micro-Dock */
+  --dock-bg: rgba(18, 18, 24, 0.78);
+  --dock-border: rgba(255, 255, 255, 0.12);
+  --dock-icon-color: #e4e4e7;
+  --dock-glow-hover: 0 0 16px rgba(168, 85, 247, 0.6);
+
+  /* Phân cấp Typography */
+  --artist-title-font: 'Montserrat', sans-serif;
+  --artist-title-size: 0.98rem;
+  --artist-title-weight: 800;
+  --artist-meta-size: 0.64rem;
+  --artist-meta-color: #94a3b8;
+
   --artist-card-max-w: 240px;
-  --artist-name-h: 54px;
+  --artist-info-h: 64px;
 }
 
 .artist-grid {
@@ -12,55 +35,57 @@
   width: 100%;
 }
 
+/* ==========================================================================
+   🪨 Monolithic Glass Card Architecture (Concept 1)
+   ========================================================================== */
+
 .artist-card {
   width: 100%;
   max-width: var(--artist-card-max-w);
   margin: 0 auto;
-  background: rgba(12, 12, 14, 0.65);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
+  background: var(--artist-card-bg);
+  border: 1px solid var(--artist-card-border);
+  border-radius: var(--artist-card-radius);
   overflow: hidden;
   position: relative;
   cursor: pointer;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   transition: 
-    transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
-    filter 0.45s cubic-bezier(0.16, 1, 0.3, 1),
-    opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
     border-color 0.35s ease,
-    box-shadow 0.45s ease;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    box-shadow 0.4s ease,
+    opacity 0.4s ease;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
   user-select: none;
   outline: none;
-  will-change: transform, filter, opacity;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
   display: flex;
   flex-direction: column;
 }
 
 .artist-card:focus-visible {
-  border-color: var(--accent-color);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+  border-color: var(--artist-card-border-hover);
+  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.5), var(--aura-spotlight);
 }
 
-/* 🌟 Focus Blur Spotlight Effect: Rê chuột vào 1 thẻ thì các thẻ còn lại mờ đi (blur) */
+/* 🌟 Focus Spotlight Effect: 60fps GPU-composited (NO gaussian blur on grid) */
 @media (hover: hover) and (pointer: fine) {
   .artist-grid:hover .artist-card:not(:hover) {
-    filter: blur(3.5px) grayscale(25%);
     opacity: 0.45;
-    transform: scale(0.97);
+    transform: scale(0.985);
+    filter: brightness(0.75);
   }
 
   .artist-card:hover {
-    transform: translateY(-8px) scale(1.03);
-    border-color: rgba(255, 255, 255, 0.4);
-    box-shadow: 
-      0 20px 45px -10px rgba(0, 0, 0, 0.95),
-      0 0 30px rgba(147, 51, 234, 0.25),
-      inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    transform: translateY(-8px) scale(1.02);
+    border-color: var(--artist-card-border-hover);
+    box-shadow: var(--aura-spotlight), inset 0 1px 1px rgba(255, 255, 255, 0.18);
     z-index: 10;
-    filter: blur(0px) brightness(1.05);
     opacity: 1;
+    filter: brightness(1.05);
   }
 
   .artist-card:hover .artist-avatar-img {
@@ -71,24 +96,32 @@
     opacity: 1;
     visibility: visible;
     transform: scale(1);
+    pointer-events: auto;
   }
 
-  .artist-card:hover .artist-name {
-    background: #141416;
+  .artist-card:hover .artist-name-title {
     color: #ffffff;
-    border-top-color: rgba(255, 255, 255, 0.2);
+    text-shadow: 0 0 12px rgba(168, 85, 247, 0.5);
+  }
+
+  .artist-card:hover .artist-role-badge .role-dot {
+    background: #a855f7;
+    box-shadow: 0 0 8px #a855f7;
+    transform: scale(1.25);
   }
 }
 
-.artist-avatar {
+/* ==========================================================================
+   🎨 Media Canvas: Dubplate Vinyl or Artwork
+   ========================================================================== */
+
+.artist-media-canvas {
   width: 100%;
   aspect-ratio: 1 / 1;
-  background: #09090b;
+  background: #08080c;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #444444;
-  font-size: 0.75rem;
   position: relative;
   overflow: hidden;
 }
@@ -101,136 +134,364 @@
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s ease;
 }
 
-.artist-name {
-  padding: 16px 14px;
-  text-align: center;
-  font-weight: 700;
-  font-size: 0.95rem;
-  letter-spacing: 1.5px;
-  background: #0d0d0f;
-  border-top: 1px solid var(--border-color);
-  color: var(--text-main);
-  transition: background 0.35s ease, color 0.35s ease, border-color 0.35s ease;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-height: var(--artist-name-h);
+/* Deep gradient scrim that blurs media into monolithic footer seamlessly */
+.artist-media-scrim {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 48px;
+  background: linear-gradient(180deg, transparent 0%, rgba(12, 12, 16, 0.75) 65%, rgba(12, 12, 16, 1) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ==========================================================================
+   🎵 Archival Dubplate Vinyl Monogram Placeholder
+   ========================================================================== */
+
+.dubplate-vinyl-container {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 10px;
+  background: radial-gradient(circle at center, #15151f 0%, #08080c 75%, #040406 100%);
+  position: relative;
+  overflow: hidden;
 }
 
-/* Overlay platform links với hiệu ứng kính mờ (Frosted Glass Blur) */
+.dubplate-vinyl-svg {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  display: block;
+  transform-origin: center center;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.vinyl-disc-body {
+  fill: #09090e;
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 1.2px;
+}
+
+.vinyl-watermark-top {
+  font-size: 5.2px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  fill: #94a3b8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.vinyl-monogram-text {
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  fill: #ffffff;
+  font-family: var(--artist-title-font, 'Montserrat', sans-serif);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.9));
+}
+
+.vinyl-spindle-hole {
+  fill: #060608;
+  stroke: rgba(255, 255, 255, 0.4);
+  stroke-width: 0.8px;
+}
+
+.vinyl-watermark-bottom {
+  font-size: 5px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  fill: #c084fc;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Turntable rotation on hover and active state */
+@media (hover: hover) and (pointer: fine) {
+  .artist-card:hover .dubplate-vinyl-svg {
+    animation: vinylSpin 20s linear infinite;
+  }
+}
+
+.artist-card.active-card .dubplate-vinyl-svg {
+  animation: vinylSpin 20s linear infinite;
+}
+
+@keyframes vinylSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================================================
+   🪨 Monolithic Glass Info Slate (Artist Name + Professional Role Badge)
+   ========================================================================== */
+
+.artist-info-slate {
+  padding: 10px 14px 16px;
+  text-align: center;
+  background: rgba(12, 12, 16, 1);
+  color: var(--text-main);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  position: relative;
+  z-index: 2;
+  min-height: var(--artist-info-h);
+}
+
+.artist-name-title {
+  margin: 0;
+  font-weight: 800;
+  font-size: var(--artist-title-size);
+  letter-spacing: 1.4px;
+  font-family: var(--artist-title-font);
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+.artist-role-badge {
+  font-size: var(--artist-meta-size);
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  color: var(--artist-meta-color);
+  text-transform: uppercase;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.role-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #a855f7;
+  display: inline-block;
+  box-shadow: 0 0 6px rgba(168, 85, 247, 0.6);
+  transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+/* ==========================================================================
+   🚀 Two-Tier Micro-Dock Overlay (No Scrollbars, Ergonomic Touch Targets)
+   ========================================================================== */
+
 .artist-links-overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: calc(100% - var(--artist-name-h));
-  background: rgba(0, 0, 0, 0.58);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  height: calc(100% - var(--artist-info-h));
+  background: rgba(8, 8, 12, 0.68);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  transition: 
+    opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0.35s ease;
   transform: scale(0.96);
-  padding: 15px;
-  z-index: 2;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
-}
-
-.artist-links-overlay::-webkit-scrollbar {
-  width: 4px;
-}
-
-.artist-links-overlay::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.25);
-  border-radius: 4px;
+  padding: 12px;
+  z-index: 5;
+  overflow: hidden; /* Eliminates the scrollbar bug entirely */
 }
 
 .artist-card.active-card {
-  border-color: var(--text-main);
+  border-color: var(--artist-card-border-hover);
+  box-shadow: var(--aura-spotlight);
 }
 
 .artist-card.active-card .artist-links-overlay {
   opacity: 1;
   visibility: visible;
+  pointer-events: auto;
   transform: scale(1);
 }
 
-.platform-link {
+/* Tier 1: Hero Video CTA Button */
+.hero-video-cta {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(236, 72, 153, 0.3));
+  border: 1px solid rgba(168, 85, 247, 0.7);
+  border-radius: 20px;
+  padding: 8px 16px;
   color: #ffffff;
-  text-decoration: none;
-  font-size: 0.78rem;
-  font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  padding: 9px 18px;
-  border-radius: 24px;
+  font-size: 0.76rem;
+  font-weight: 800;
   letter-spacing: 1.2px;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  width: 82%;
-  max-width: 180px;
-  text-align: center;
-  background: rgba(18, 18, 22, 0.65);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 4px 18px rgba(168, 85, 247, 0.35);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
-.platform-link:hover {
-  background: #ffffff;
-  color: #000000;
+.hero-video-cta:hover,
+.hero-video-cta:focus-visible {
+  background: linear-gradient(135deg, #a855f7, #ec4899);
   border-color: #ffffff;
-  transform: scale(1.05);
-  box-shadow: 0 6px 18px rgba(255, 255, 255, 0.35);
+  transform: translateY(-2px) scale(1.06);
+  box-shadow: 0 6px 24px rgba(168, 85, 247, 0.6);
 }
 
-.platform-link.platform-link-spotify:hover {
+.hero-play-icon {
+  font-size: 0.72rem;
+  line-height: 1;
+  color: #f472b6;
+  filter: drop-shadow(0 0 4px rgba(244, 114, 182, 0.8));
+  transition: transform 0.25s ease;
+}
+
+.hero-video-cta:hover .hero-play-icon {
+  transform: scale(1.15);
+  color: #ffffff;
+}
+
+/* Tier 2: Micro-Dock */
+.platform-micro-dock {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 6px 12px;
+  background: var(--dock-bg);
+  border: 1px solid var(--dock-border);
+  border-radius: 30px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  max-width: 95%;
+}
+
+.micro-dock-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--dock-icon-color);
+  text-decoration: none;
+  position: relative;
+  transition: 
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.micro-dock-btn svg {
+  width: 17px;
+  height: 17px;
+  display: block;
+}
+
+.micro-dock-btn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.8);
+  outline-offset: 2px;
+}
+
+/* Micro-dock platform distinct hover & focus styles */
+.micro-dock-btn.platform-spotify:hover,
+.micro-dock-btn.platform-spotify:focus-visible {
   background: #1db954;
   color: #000000;
   border-color: #1db954;
-  box-shadow: 0 6px 20px rgba(29, 185, 84, 0.45);
+  transform: translateY(-3px) scale(1.14);
+  box-shadow: 0 0 16px rgba(29, 185, 84, 0.7);
 }
 
-.platform-link.platform-link-soundcloud:hover {
+.micro-dock-btn.platform-soundcloud:hover,
+.micro-dock-btn.platform-soundcloud:focus-visible {
   background: #ff5500;
   color: #ffffff;
   border-color: #ff5500;
-  box-shadow: 0 6px 20px rgba(255, 85, 0, 0.45);
+  transform: translateY(-3px) scale(1.14);
+  box-shadow: 0 0 16px rgba(255, 85, 0, 0.7);
 }
 
-.platform-link.platform-link-youtube:hover {
+.micro-dock-btn.platform-youtube:hover,
+.micro-dock-btn.platform-youtube:focus-visible {
   background: #ef4444;
   color: #ffffff;
   border-color: #ef4444;
-  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.45);
+  transform: translateY(-3px) scale(1.14);
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.7);
 }
 
-.platform-link.platform-link-instagram:hover {
+.micro-dock-btn.platform-instagram:hover,
+.micro-dock-btn.platform-instagram:focus-visible {
   background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045);
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.6);
-  box-shadow: 0 6px 20px rgba(225, 48, 108, 0.45);
+  transform: translateY(-3px) scale(1.14);
+  box-shadow: 0 0 16px rgba(225, 48, 108, 0.7);
 }
 
+.micro-dock-btn.platform-tiktok:hover,
+.micro-dock-btn.platform-tiktok:focus-visible {
+  background: #000000;
+  color: #25f4ee;
+  border-color: #fe2c55;
+  transform: translateY(-3px) scale(1.14);
+  box-shadow: 0 0 16px rgba(254, 44, 85, 0.7);
+}
+
+.micro-dock-btn.platform-default:hover,
+.micro-dock-btn.platform-default:focus-visible {
+  background: #a855f7;
+  color: #ffffff;
+  border-color: #a855f7;
+  transform: translateY(-3px) scale(1.14);
+  box-shadow: var(--dock-glow-hover);
+}
+
+/* Fallback Card when no platform links are present */
 .no-links-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 14px 12px;
+  padding: 12px 10px;
   text-align: center;
-  max-width: 92%;
-  background: rgba(18, 18, 22, 0.6);
-  border: 1px dashed rgba(255, 255, 255, 0.15);
+  max-width: 90%;
+  background: rgba(18, 18, 22, 0.65);
+  border: 1px dashed rgba(255, 255, 255, 0.16);
   border-radius: 12px;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -266,87 +527,44 @@
   letter-spacing: 0.8px;
 }
 
-.artists-loading,
-.artists-error,
-.artists-empty {
-  text-align: center;
-  padding: 80px 20px;
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  letter-spacing: 1px;
-}
-
-.artists-error {
-  color: #f87171;
-}
-
-/* Tablet và màn hình nhỏ */
-@media (max-width: 992px) {
-  .artist-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 210px));
-    gap: 24px;
-    margin-top: 25px;
-  }
-}
-
-/* Giao diện điện thoại (Mobile) - Bố cục 2 cột tiêu chuẩn như Spotify/Apple Music */
-@media (max-width: 640px) {
-  :root {
-    --artist-name-h: 46px;
-  }
-
-  .artist-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 16px;
-    margin-top: 20px;
-    margin-bottom: 60px;
-  }
-
-  .artist-card {
-    max-width: 100%;
-    border-radius: 14px;
-  }
-
-  .artist-name {
-    padding: 12px 8px;
-    font-size: 0.82rem;
-    letter-spacing: 1px;
-  }
-
-  .artist-links-overlay {
-    gap: 8px;
-    padding: 10px;
-  }
-
-  .platform-link {
-    font-size: 0.7rem;
-    padding: 7px 12px;
-    width: 90%;
-    letter-spacing: 0.8px;
-  }
-}
-
-/* Màn hình điện thoại siêu nhỏ (<= 360px) */
-@media (max-width: 360px) {
-  .artist-grid {
-    gap: 10px;
-  }
-
-  .artist-name {
-    font-size: 0.75rem;
-  }
-}
-
 /* ==========================================================================
-   🎬 Platform Stats & Top Video UI Enhancements
+   🏷️ Telemetry HUD Badges: Archival Catalog Code & Verified Views
    ========================================================================== */
 
-/* 🌟 Views Metric Pill / Badge trên góc Avatar */
+/* Left: Archival Catalog Code [MLDK // 01] */
+.artist-catalog-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 4;
+  background: rgba(10, 10, 14, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 3px 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #a1a1aa;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: border-color 0.3s ease, color 0.3s ease;
+}
+
+.artist-card:hover .artist-catalog-badge,
+.artist-card.active-card .artist-catalog-badge {
+  border-color: rgba(168, 85, 247, 0.5);
+  color: #e4e4e7;
+}
+
+/* Right: Verified Views Metric Pill */
 .artist-views-badge {
   position: absolute;
   top: 10px;
   right: 10px;
-  z-index: 3;
+  z-index: 4;
   background: rgba(10, 10, 14, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 20px;
@@ -365,7 +583,8 @@
   transition: transform 0.3s ease, border-color 0.3s ease;
 }
 
-.artist-card:hover .artist-views-badge {
+.artist-card:hover .artist-views-badge,
+.artist-card.active-card .artist-views-badge {
   border-color: rgba(168, 85, 247, 0.5);
   transform: translateY(-2px);
 }
@@ -391,12 +610,12 @@
   }
 }
 
-/* 🏷️ Platform Badge (cho Spotify, SoundCloud, Instagram, v.v. khi không có số view ảo) */
+/* Right: Platform Badge (when no verified views) */
 .artist-platform-badge {
   position: absolute;
   top: 10px;
   right: 10px;
-  z-index: 3;
+  z-index: 4;
   background: rgba(10, 10, 14, 0.82);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 20px;
@@ -415,7 +634,8 @@
   transition: transform 0.3s ease, border-color 0.3s ease;
 }
 
-.artist-card:hover .artist-platform-badge {
+.artist-card:hover .artist-platform-badge,
+.artist-card.active-card .artist-platform-badge {
   transform: translateY(-2px);
 }
 
@@ -481,44 +701,6 @@
 
 .platform-badge-text {
   white-space: nowrap;
-}
-
-/* 🔥 Nút Xem Video Hot Nhất trong Overlay */
-.top-video-cta {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(236, 72, 153, 0.25));
-  border: 1px solid rgba(168, 85, 247, 0.65);
-  border-radius: 24px;
-  padding: 9px 18px;
-  color: #ffffff;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 1.2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  cursor: pointer;
-  width: 82%;
-  max-width: 180px;
-  text-align: center;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 4px 18px rgba(168, 85, 247, 0.3);
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  outline: none;
-}
-
-.top-video-cta:hover {
-  background: linear-gradient(135deg, #a855f7, #ec4899);
-  border-color: #ffffff;
-  color: #ffffff;
-  transform: scale(1.07);
-  box-shadow: 0 6px 24px rgba(168, 85, 247, 0.6);
-}
-
-.fire-icon {
-  font-size: 0.9rem;
-  filter: drop-shadow(0 0 4px rgba(249, 115, 22, 0.8));
 }
 
 /* ==========================================================================
@@ -628,7 +810,6 @@
   transform: rotate(90deg);
 }
 
-/* Video Player Container (16:9) */
 .top-video-player-container {
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -644,60 +825,6 @@
   display: block;
 }
 
-.video-poster-link {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  text-decoration: none;
-}
-
-.video-poster-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.4s ease;
-}
-
-.video-poster-link:hover .video-poster-img {
-  transform: scale(1.04);
-}
-
-.play-overlay-btn {
-  position: absolute;
-  background: rgba(0, 0, 0, 0.75);
-  color: #ffffff;
-  padding: 12px 24px;
-  border-radius: 30px;
-  font-weight: 700;
-  font-size: 0.9rem;
-  letter-spacing: 1px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
-  transition: all 0.3s ease;
-}
-
-.video-poster-link:hover .play-overlay-btn {
-  background: #a855f7;
-  border-color: #ffffff;
-  transform: scale(1.08);
-}
-
-.no-embed-fallback {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-}
-
-/* Details and metrics */
 .top-video-modal-details {
   padding: 22px 24px 26px;
   display: flex;
@@ -714,7 +841,6 @@
   letter-spacing: 0.4px;
 }
 
-/* Grid 4 hộp thông số */
 .video-stats-metrics-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -794,7 +920,120 @@
   color: #ffffff;
 }
 
+.artists-loading,
+.artists-error,
+.artists-empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  letter-spacing: 1px;
+}
+
+.artists-error {
+  color: #f87171;
+}
+
+/* ==========================================================================
+   📱 Responsive Breakpoints & Adaptive Micro-Dock (Desktop 36px -> Mobile 28px)
+   ========================================================================== */
+
+/* Tablet và màn hình nhỏ */
+@media (max-width: 992px) {
+  .artist-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 210px));
+    gap: 22px;
+    margin-top: 25px;
+  }
+}
+
+/* Mobile (<= 640px) - Bố cục 2 cột tiêu chuẩn */
 @media (max-width: 640px) {
+  :root {
+    --artist-info-h: 52px;
+  }
+
+  .artist-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 20px;
+    margin-bottom: 50px;
+  }
+
+  .artist-card {
+    max-width: 100%;
+    border-radius: 14px;
+  }
+
+  .artist-catalog-badge {
+    top: 8px;
+    left: 8px;
+    font-size: 0.58rem;
+    padding: 2px 6px;
+  }
+
+  .artist-views-badge,
+  .artist-platform-badge {
+    top: 8px;
+    right: 8px;
+    font-size: 0.6rem;
+    padding: 3px 8px;
+  }
+
+  .artist-info-slate {
+    padding: 8px 8px 12px;
+  }
+
+  .artist-name-title {
+    font-size: 0.84rem;
+    letter-spacing: 1px;
+  }
+
+  .artist-role-badge {
+    font-size: 0.58rem;
+    letter-spacing: 0.8px;
+  }
+
+  .artist-links-overlay {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .hero-video-cta {
+    font-size: 0.66rem;
+    padding: 6px 12px;
+    letter-spacing: 0.8px;
+  }
+
+  /* Micro-dock shrinks to 28px on mobile */
+  .platform-micro-dock {
+    gap: 6px;
+    padding: 4px 6px;
+  }
+
+  .micro-dock-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .micro-dock-btn svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* 44px WCAG 2.5.5 touch target on mobile */
+  .micro-dock-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 44px;
+    min-height: 44px;
+    width: 100%;
+    height: 100%;
+  }
+
   .video-stats-metrics-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
@@ -820,17 +1059,44 @@
   }
 }
 
+/* Màn hình điện thoại siêu nhỏ (<= 360px) */
+@media (max-width: 360px) {
+  .artist-grid {
+    gap: 8px;
+  }
+
+  .artist-name-title {
+    font-size: 0.76rem;
+  }
+
+  .artist-role-badge {
+    font-size: 0.52rem;
+  }
+
+  .platform-micro-dock {
+    gap: 4px;
+    padding: 3px 5px;
+  }
+
+  .micro-dock-btn {
+    width: 26px;
+    height: 26px;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .artist-card,
   .artist-avatar-img,
   .artist-links-overlay,
-  .platform-link {
+  .micro-dock-btn,
+  .hero-video-cta,
+  .dubplate-vinyl-svg {
     transition: none !important;
+    animation: none !important;
   }
   .artist-grid:hover .artist-card:not(:hover) {
-    filter: none !important;
     opacity: 1 !important;
     transform: none !important;
+    filter: none !important;
   }
 }
