@@ -43,6 +43,13 @@
   position: relative;
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .nav-links:hover a:not(:hover) {
+    opacity: 0.45;
+    filter: blur(0.5px);
+  }
+}
+
 .nav-links a:hover,
 .nav-links a.active-link {
   color: var(--accent-color);

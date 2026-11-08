@@ -7,37 +7,76 @@
 }
 
 .artist-card {
-  background: rgba(10, 10, 10, 0.5);
+  background: rgba(12, 12, 14, 0.65);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: 18px;
   overflow: hidden;
   position: relative;
   cursor: pointer;
-  transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), border-color 0.4s ease, box-shadow 0.4s ease;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: 
+    transform 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.4s ease,
+    box-shadow 0.5s ease;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   user-select: none;
   outline: none;
+  will-change: transform, filter, opacity;
 }
 
 .artist-card:focus-visible {
   border-color: var(--accent-color);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
 }
 
-.artist-card:hover {
-  transform: translateY(-8px);
-  border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+/* 🌟 Focus Blur Spotlight Effect: Rê chuột vào 1 thẻ thì các thẻ còn lại mờ đi (blur) giống website cao cấp */
+@media (hover: hover) and (pointer: fine) {
+  .artist-grid:hover .artist-card:not(:hover) {
+    filter: blur(4px) grayscale(25%);
+    opacity: 0.4;
+    transform: scale(0.96);
+  }
+
+  .artist-card:hover {
+    transform: translateY(-10px) scale(1.03);
+    border-color: rgba(255, 255, 255, 0.45);
+    box-shadow: 
+      0 25px 50px -10px rgba(0, 0, 0, 0.95),
+      0 0 35px rgba(147, 51, 234, 0.28),
+      inset 0 1px 1px rgba(255, 255, 255, 0.25);
+    z-index: 10;
+    filter: blur(0px) brightness(1.06);
+    opacity: 1;
+  }
+
+  .artist-card:hover .artist-avatar-img {
+    transform: scale(1.08);
+  }
+
+  .artist-card:hover .artist-links-overlay {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+  }
+
+  .artist-card:hover .artist-name {
+    background: #141416;
+    color: #ffffff;
+    border-top-color: rgba(255, 255, 255, 0.2);
+  }
 }
 
 .artist-avatar {
   width: 100%;
   aspect-ratio: 1 / 1;
-  background: #0a0a0a;
+  background: #09090b;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #333333;
+  color: #444444;
   font-size: 0.8rem;
   position: relative;
   overflow: hidden;
@@ -48,39 +87,42 @@
   height: 100%;
   object-fit: cover;
   display: block;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s ease;
 }
 
 .artist-name {
-  padding: 25px 20px;
+  padding: 24px 20px;
   text-align: center;
   font-weight: 700;
   font-size: 1.1rem;
   letter-spacing: 2px;
-  background: #0d0d0d;
+  background: #0d0d0f;
   border-top: 1px solid var(--border-color);
   color: var(--text-main);
+  transition: background 0.4s ease, color 0.4s ease, border-color 0.4s ease;
 }
 
-/* Overlay platform links */
+/* Overlay platform links với hiệu ứng kính mờ (Frosted Glass Blur) */
 .artist-links-overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: calc(100% - 73px);
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
+  background: rgba(0, 0, 0, 0.58);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 15px;
+  gap: 14px;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-  transform: scale(0.95);
+  transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: scale(0.96);
   padding: 20px;
+  z-index: 2;
 }
 
 .artist-card.active-card {
@@ -97,27 +139,31 @@
   color: #ffffff;
   text-decoration: none;
   font-size: 0.85rem;
-  font-weight: 500;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 12px 25px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 12px 24px;
   border-radius: 30px;
-  letter-spacing: 1px;
-  transition: all 0.3s;
-  width: 75%;
+  letter-spacing: 1.5px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  width: 80%;
+  max-width: 220px;
   text-align: center;
-  background: rgba(0, 0, 0, 0.6);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  background: rgba(18, 18, 22, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
 .platform-link:hover {
-  background: var(--text-main);
+  background: #ffffff;
   color: #000000;
-  border-color: var(--text-main);
-  transform: scale(1.05);
+  border-color: #ffffff;
+  transform: scale(1.06);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.35);
 }
 
 .no-links-hint {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
   letter-spacing: 1px;
 }
@@ -143,3 +189,16 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .artist-card,
+  .artist-avatar-img,
+  .artist-links-overlay,
+  .platform-link {
+    transition: none !important;
+  }
+  .artist-grid:hover .artist-card:not(:hover) {
+    filter: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
