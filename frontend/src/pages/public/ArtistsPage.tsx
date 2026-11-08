@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useId } from 'react';
 import type { Artist, ArtistLink } from '../../types';
 import { publicApi } from '../../services/api';
 import {
@@ -97,14 +97,18 @@ export const PlatformIcon: React.FC<{ platform: string }> = ({ platform }) => {
  * Dubplate Vinyl Monogram Placeholder Component
  * Renders concentric sound grooves with a brushed aluminum center hub,
  * 2-letter monogram and archival watermark stamping.
+ * Separates the rotating disc body from stationary specular sheen for physical realism.
  */
 export const DubplateVinylPlaceholder: React.FC<{ name: string; artistId: number }> = ({
   name,
   artistId,
 }) => {
   const monogram = getArtistMonogram(name);
-  const gradId = `vinyl-hub-grad-${artistId}`;
-  const shineId = `vinyl-shine-${artistId}`;
+  const rawId = useId();
+  const safeId = `${artistId}-${rawId.replace(/[^a-zA-Z0-9_-]/g, '')}`;
+  const gradId = `vinyl-hub-grad-${safeId}`;
+  const shineId = `vinyl-shine-${safeId}`;
+  const shineCrossId = `vinyl-shine-cross-${safeId}`;
 
   return (
     <div
@@ -126,7 +130,7 @@ export const DubplateVinylPlaceholder: React.FC<{ name: string; artistId: number
             <stop offset="100%" stopColor="#0a0a0e" />
           </radialGradient>
 
-          {/* Anisotropic vinyl sheen reflection highlights */}
+          {/* Anisotropic vinyl sheen reflection highlights (Stationary room light) */}
           <linearGradient id={shineId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="rgba(255, 255, 255, 0.08)" />
             <stop offset="35%" stopColor="transparent" />
@@ -135,7 +139,7 @@ export const DubplateVinylPlaceholder: React.FC<{ name: string; artistId: number
           </linearGradient>
 
           {/* Cross sheen with subtle violet tint */}
-          <linearGradient id={`${shineId}-cross`} x1="100%" y1="0%" x2="0%" y2="100%">
+          <linearGradient id={shineCrossId} x1="100%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="rgba(168, 85, 247, 0.07)" />
             <stop offset="40%" stopColor="transparent" />
             <stop offset="60%" stopColor="transparent" />
@@ -143,84 +147,125 @@ export const DubplateVinylPlaceholder: React.FC<{ name: string; artistId: number
           </linearGradient>
         </defs>
 
-        {/* Outer vinyl disc surface */}
-        <circle cx="100" cy="100" r="95" className="vinyl-disc-body" />
+        {/* 🔄 Rotating Physical Disc Body (Turntable Rotation) */}
+        <g className="vinyl-rotating-body">
+          {/* Outer vinyl disc surface */}
+          <circle cx="100" cy="100" r="95" className="vinyl-disc-body" />
 
-        {/* Concentric sound grooves */}
-        <g className="vinyl-grooves" stroke="rgba(255, 255, 255, 0.035)" strokeWidth="1" fill="none">
-          <circle cx="100" cy="100" r="88" />
-          <circle cx="100" cy="100" r="82" stroke="rgba(255, 255, 255, 0.045)" />
-          <circle cx="100" cy="100" r="76" />
-          <circle cx="100" cy="100" r="70" stroke="rgba(255, 255, 255, 0.05)" />
-          <circle cx="100" cy="100" r="64" />
-          <circle cx="100" cy="100" r="58" stroke="rgba(255, 255, 255, 0.045)" />
-          <circle cx="100" cy="100" r="52" />
-          <circle cx="100" cy="100" r="46" stroke="rgba(255, 255, 255, 0.05)" />
-          <circle cx="100" cy="100" r="41" stroke="rgba(255, 255, 255, 0.07)" strokeDasharray="4 2" />
+          {/* Concentric sound grooves: rich micro-groove texture across acoustic bands */}
+          <g className="vinyl-grooves" fill="none">
+            {/* Outer lead-in lip & run-in */}
+            <circle cx="100" cy="100" r="93.5" stroke="rgba(255, 255, 255, 0.12)" strokeWidth="0.75" />
+            <circle cx="100" cy="100" r="91" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="0.5" />
+
+            {/* Track 1 Acoustic Micro-Grooves */}
+            <circle cx="100" cy="100" r="88" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="0.6" />
+            <circle cx="100" cy="100" r="86" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="0.5" />
+            <circle cx="100" cy="100" r="84" stroke="rgba(255, 255, 255, 0.06)" strokeWidth="0.6" />
+            <circle cx="100" cy="100" r="82" stroke="rgba(255, 255, 255, 0.09)" strokeWidth="0.5" />
+            <circle cx="100" cy="100" r="80" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="0.6" />
+            <circle cx="100" cy="100" r="78" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="0.5" />
+            <circle cx="100" cy="100" r="76" stroke="rgba(255, 255, 255, 0.06)" strokeWidth="0.6" />
+            <circle cx="100" cy="100" r="74" stroke="rgba(255, 255, 255, 0.09)" strokeWidth="0.5" />
+
+            {/* Track 1 Silence Cut Marker Gap */}
+            <circle cx="100" cy="100" r="72" stroke="rgba(255, 255, 255, 0.13)" strokeWidth="0.6" strokeDasharray="6 3" />
+
+            {/* Track 2 Acoustic Micro-Grooves */}
+            <circle cx="100" cy="100" r="69" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="0.6" />
+            <circle cx="100" cy="100" r="67" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="0.5" />
+            <circle cx="100" cy="100" r="65" stroke="rgba(255, 255, 255, 0.06)" strokeWidth="0.6" />
+            <circle cx="100" cy="100" r="63" stroke="rgba(255, 255, 255, 0.09)" strokeWidth="0.5" />
+            <circle cx="100" cy="100" r="61" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="0.6" />
+            <circle cx="100" cy="100" r="59" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="0.5" />
+            <circle cx="100" cy="100" r="57" stroke="rgba(255, 255, 255, 0.06)" strokeWidth="0.6" />
+            <circle cx="100" cy="100" r="55" stroke="rgba(255, 255, 255, 0.09)" strokeWidth="0.5" />
+            <circle cx="100" cy="100" r="53" stroke="rgba(255, 255, 255, 0.05)" strokeWidth="0.6" />
+
+            {/* Track 2 Silence Cut Marker Gap */}
+            <circle cx="100" cy="100" r="51" stroke="rgba(255, 255, 255, 0.13)" strokeWidth="0.6" strokeDasharray="5 2.5" />
+
+            {/* Lead-out / run-out groove spiraling into center hub */}
+            <circle cx="100" cy="100" r="48" stroke="rgba(255, 255, 255, 0.07)" strokeWidth="0.6" />
+            <circle cx="100" cy="100" r="45" stroke="rgba(255, 255, 255, 0.09)" strokeWidth="0.6" />
+            <circle cx="100" cy="100" r="42" stroke="rgba(255, 255, 255, 0.06)" strokeWidth="0.6" />
+            <circle cx="100" cy="100" r="39" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="0.6" />
+            <circle cx="100" cy="100" r="36.5" stroke="rgba(255, 255, 255, 0.11)" strokeWidth="0.7" strokeDasharray="4 2" />
+          </g>
+
+          {/* Brushed aluminum center hub / clamp puck */}
+          <circle
+            cx="100"
+            cy="100"
+            r="34"
+            fill={`url(#${gradId})`}
+            stroke="rgba(255, 255, 255, 0.26)"
+            strokeWidth="1.2"
+            className="vinyl-center-hub"
+          />
+
+          {/* Neon accent ring around hub */}
+          <circle
+            cx="100"
+            cy="100"
+            r="31"
+            fill="none"
+            stroke="rgba(168, 85, 247, 0.45)"
+            strokeWidth="0.8"
+          />
+
+          {/* Micro-milled aluminum circular textures */}
+          <circle
+            cx="100"
+            cy="100"
+            r="25"
+            fill="none"
+            stroke="rgba(255, 255, 255, 0.08)"
+            strokeWidth="0.5"
+          />
+          <circle
+            cx="100"
+            cy="100"
+            r="18"
+            fill="none"
+            stroke="rgba(255, 255, 255, 0.06)"
+            strokeWidth="0.5"
+          />
+
+          {/* Watermark: MELODICK RECS. */}
+          <text
+            x="100"
+            y="82"
+            textAnchor="middle"
+            className="vinyl-watermark-top"
+          >
+            MELODICK RECS.
+          </text>
+
+          {/* 2-Letter Monogram (Boldly centered on brushed aluminum clamp) */}
+          <text
+            x="100"
+            y="104"
+            textAnchor="middle"
+            className="vinyl-monogram-text"
+          >
+            {monogram}
+          </text>
+
+          {/* Watermark: • ARCHIVE • */}
+          <text
+            x="100"
+            y="123"
+            textAnchor="middle"
+            className="vinyl-watermark-bottom"
+          >
+            • ARCHIVE •
+          </text>
         </g>
 
-        {/* Specular sheen reflection arcs */}
+        {/* 🌟 Specular Sheen Reflection Arcs (Stationary light reflection on rotating surface) */}
         <circle cx="100" cy="100" r="95" fill={`url(#${shineId})`} pointerEvents="none" />
-        <circle cx="100" cy="100" r="95" fill={`url(#${shineId}-cross)`} pointerEvents="none" />
-
-        {/* Brushed aluminum center hub */}
-        <circle
-          cx="100"
-          cy="100"
-          r="34"
-          fill={`url(#${gradId})`}
-          stroke="rgba(255, 255, 255, 0.22)"
-          strokeWidth="1.2"
-          className="vinyl-center-hub"
-        />
-
-        {/* Neon accent ring around hub */}
-        <circle
-          cx="100"
-          cy="100"
-          r="31"
-          fill="none"
-          stroke="rgba(168, 85, 247, 0.45)"
-          strokeWidth="0.8"
-        />
-
-        {/* Watermark: MELODICK RECS. */}
-        <text
-          x="100"
-          y="83"
-          textAnchor="middle"
-          className="vinyl-watermark-top"
-        >
-          MELODICK RECS.
-        </text>
-
-        {/* 2-Letter Monogram */}
-        <text
-          x="100"
-          y="107"
-          textAnchor="middle"
-          className="vinyl-monogram-text"
-        >
-          {monogram}
-        </text>
-
-        {/* Center spindle hole */}
-        <circle
-          cx="100"
-          cy="114"
-          r="3"
-          className="vinyl-spindle-hole"
-        />
-
-        {/* Watermark: • ARCHIVE • */}
-        <text
-          x="100"
-          y="126"
-          textAnchor="middle"
-          className="vinyl-watermark-bottom"
-        >
-          • ARCHIVE •
-        </text>
+        <circle cx="100" cy="100" r="95" fill={`url(#${shineCrossId})`} pointerEvents="none" />
       </svg>
     </div>
   );
@@ -471,6 +516,56 @@ export const ArtistsPage: React.FC = () => {
 
                   {/* Gradient Scrim blending media seamlessly into monolithic footer */}
                   <div className="artist-media-scrim" aria-hidden="true" />
+
+                  {/* 🚀 Two-Tier Micro-Dock Overlay (Scoped to Media Canvas for precise 1:1 framing) */}
+                  <div className="artist-links-overlay">
+                    {/* Tier 1: Hero Video CTA Button (when verified video exists) */}
+                    {hasPlayableVideo && (
+                      <button
+                        type="button"
+                        className="hero-video-cta"
+                        onClick={(e) => openTopVideoModal(e, artist)}
+                        aria-label={`Xem video hot của ${artist.name}: ${topVideo!.title}`}
+                        title={`Xem video hot: ${topVideo!.title}`}
+                      >
+                        <span className="hero-play-icon" aria-hidden="true">▶</span>
+                        <span className="hero-video-text">XEM VIDEO HOT</span>
+                      </button>
+                    )}
+
+                    {/* Tier 2: Horizontal Micro-Dock */}
+                    {validLinks.length > 0 ? (
+                      <div
+                        className="platform-micro-dock"
+                        role="group"
+                        aria-label={`Các nền tảng của ${artist.name}`}
+                      >
+                        {validLinks.map((link, idx) => (
+                          <a
+                            key={idx}
+                            href={link.url}
+                            className={`micro-dock-btn ${getPlatformDockClass(link.platform)}`}
+                            onClick={(e) => e.stopPropagation()}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={getPlatformActionLabel(link.platform)}
+                            title={getPlatformActionLabel(link.platform)}
+                          >
+                            <PlatformIcon platform={link.platform} />
+                          </a>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="no-links-card">
+                        <span className="no-links-brand-tag">MELODICK RECS.</span>
+                        {artist.bio ? (
+                          <p className="no-links-bio">{artist.bio}</p>
+                        ) : (
+                          <span className="no-links-hint">Chưa cấu hình liên kết</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* 🪨 Monolithic Glass Info Slate (Artist Name + Professional Role Badge) */}
@@ -482,56 +577,6 @@ export const ArtistsPage: React.FC = () => {
                     <span className="role-dot" aria-hidden="true" />
                     {getArtistRoleTag(artist)}
                   </span>
-                </div>
-
-                {/* 🚀 Two-Tier Micro-Dock Overlay */}
-                <div className="artist-links-overlay" aria-hidden={!isActive}>
-                  {/* Tier 1: Hero Video CTA Button (when verified video exists) */}
-                  {hasPlayableVideo && (
-                    <button
-                      type="button"
-                      className="hero-video-cta"
-                      onClick={(e) => openTopVideoModal(e, artist)}
-                      aria-label={`Xem video hot của ${artist.name}: ${topVideo!.title}`}
-                      title={`Xem video hot: ${topVideo!.title}`}
-                    >
-                      <span className="hero-play-icon" aria-hidden="true">▶</span>
-                      <span className="hero-video-text">XEM VIDEO HOT</span>
-                    </button>
-                  )}
-
-                  {/* Tier 2: Horizontal Micro-Dock */}
-                  {validLinks.length > 0 ? (
-                    <div
-                      className="platform-micro-dock"
-                      role="group"
-                      aria-label={`Các nền tảng của ${artist.name}`}
-                    >
-                      {validLinks.map((link, idx) => (
-                        <a
-                          key={idx}
-                          href={link.url}
-                          className={`micro-dock-btn ${getPlatformDockClass(link.platform)}`}
-                          onClick={(e) => e.stopPropagation()}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label={getPlatformActionLabel(link.platform)}
-                          title={getPlatformActionLabel(link.platform)}
-                        >
-                          <PlatformIcon platform={link.platform} />
-                        </a>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="no-links-card">
-                      <span className="no-links-brand-tag">MELODICK RECS.</span>
-                      {artist.bio ? (
-                        <p className="no-links-bio">{artist.bio}</p>
-                      ) : (
-                        <span className="no-links-hint">Chưa cấu hình liên kết</span>
-                      )}
-                    </div>
-                  )}
                 </div>
               </article>
             );

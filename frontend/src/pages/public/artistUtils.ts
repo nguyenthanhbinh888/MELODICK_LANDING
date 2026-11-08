@@ -40,7 +40,16 @@ export const getPlatformDockClass = (platform: string): string => {
 
 /**
  * Extracts a distinctive 2-letter monogram for the vinyl dubplate center hub.
- * Examples: "MIRAGEMFXNK" -> "MF", "SPIDEX" -> "SP", "Binhnopro" -> "BI", "411N:))" -> "41"
+ * Supports underground compound handles, Vietnamese names with diacritics, camelCase transitions, and multi-word names.
+ * Examples:
+ * - "MIRAGEMFXNK" -> "MF"
+ * - "SPIDEX" -> "SP"
+ * - "Binhnopro" -> "BI"
+ * - "411N:))" -> "41"
+ * - "Đạt G" -> "ĐG"
+ * - "Nguyễn Phonk" -> "NP"
+ * - "Đỗ" -> "ĐỖ"
+ * - "Vũ" -> "VŨ"
  */
 export const getArtistMonogram = (name: string): string => {
   if (!name) return 'ML';
@@ -51,11 +60,11 @@ export const getArtistMonogram = (name: string): string => {
   const upper = trimmed.toUpperCase();
   if (upper === 'MIRAGEMFXNK') return 'MF';
 
-  // Multi-word names: "Mirage Phonk" -> "MP", "Bass Master" -> "BM"
+  // Multi-word names: "Mirage Phonk" -> "MP", "Đạt G" -> "ĐG"
   const parts = trimmed.split(/[\s_\-./:]+/).filter(Boolean);
   if (parts.length >= 2) {
-    const first = parts[0].replace(/[^a-zA-Z0-9]/g, '');
-    const second = parts[1].replace(/[^a-zA-Z0-9]/g, '');
+    const first = parts[0].replace(/[^\p{L}\p{N}]/gu, '');
+    const second = parts[1].replace(/[^\p{L}\p{N}]/gu, '');
     if (first && second) {
       return (first[0] + second[0]).toUpperCase();
     }
@@ -64,15 +73,15 @@ export const getArtistMonogram = (name: string): string => {
   // CamelCase transitions: e.g. "MirageMfxnk" or "BinhNoPro"
   const camelParts = trimmed.split(/(?=[A-Z][a-z])/).filter(Boolean);
   if (camelParts.length >= 2) {
-    const first = camelParts[0].replace(/[^a-zA-Z0-9]/g, '');
-    const second = camelParts[1].replace(/[^a-zA-Z0-9]/g, '');
+    const first = camelParts[0].replace(/[^\p{L}\p{N}]/gu, '');
+    const second = camelParts[1].replace(/[^\p{L}\p{N}]/gu, '');
     if (first && second) {
       return (first[0] + second[0]).toUpperCase();
     }
   }
 
-  // Fallback: first 2 alphanumeric characters
-  const alphaNum = trimmed.replace(/[^a-zA-Z0-9]/g, '');
+  // Fallback: first 2 alphanumeric/Unicode characters
+  const alphaNum = trimmed.replace(/[^\p{L}\p{N}]/gu, '');
   if (alphaNum.length >= 2) {
     return alphaNum.slice(0, 2).toUpperCase();
   }
@@ -111,6 +120,9 @@ export const getArtistRoleTag = (artist: Artist): string => {
   }
   if (primaryPlatform.includes('spotify')) {
     return 'EXCLUSIVE ARTIST // ELECTRONIC';
+  }
+  if (primaryPlatform.includes('youtube')) {
+    return 'AUDIOVISUAL ARTIST // BASS';
   }
   return 'RESIDENT ARTIST // BASS';
 };
