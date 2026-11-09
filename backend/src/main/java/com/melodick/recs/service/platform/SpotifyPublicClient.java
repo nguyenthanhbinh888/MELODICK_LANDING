@@ -14,6 +14,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
@@ -24,7 +25,14 @@ import java.util.regex.Pattern;
 public class SpotifyPublicClient {
 
     private static final Logger log = LoggerFactory.getLogger(SpotifyPublicClient.class);
+    private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+
     private static final Pattern ARTIST_ID_PATTERN = Pattern.compile("spotify\\.com\\/artist\\/([a-zA-Z0-9]+)");
+    private static final Pattern INITIAL_STATE_PATTERN = Pattern.compile("id=[\"']initialState[\"'][^>]*>([^<]+)<\\/script>");
+    private static final Pattern PLAYCOUNT_PATTERN = Pattern.compile("\"playcount\"\\s*:\\s*\"(\\d+)\"");
+    private static final Pattern FOLLOWERS_PATTERN = Pattern.compile("\"followers\"\\s*:\\s*(\\d+)");
+    private static final Pattern MONTHLY_LISTENERS_PATTERN = Pattern.compile("\"monthlyListeners\"\\s*:\\s*(\\d+)");
+    private static final Pattern ARTIST_NAME_PATTERN = Pattern.compile("\"name\"\\s*:\\s*\"([^\"]+)\"");
 
     private final String clientId;
     private final String clientSecret;
@@ -47,6 +55,7 @@ public class SpotifyPublicClient {
 
         this.restClient = RestClient.builder()
                 .requestFactory(factory)
+                .defaultHeader(HttpHeaders.USER_AGENT, USER_AGENT)
                 .build();
     }
 
@@ -59,16 +68,127 @@ public class SpotifyPublicClient {
             return PlatformFetchResult.failed("Spotify", "SPOTIFY_OEMBED");
         }
 
-        // 1. Try Spotify Web API if configured
+        String artistId = extractArtistId(linkUrl);
+
+        // 1. First priority: Public Artist Profile HTML scraper (extracts real track playcounts & calculates discography average)
+        if (StringUtils.hasText(artistId)) {
+            PlatformFetchResult scraperResult = fetchFromPublicProfileHtml(artistId, linkUrl);
+            if (scraperResult != null && scraperResult.isSuccess()) {
+                return scraperResult;
+            }
+        }
+
+        // 2. Second priority: Spotify Web API if configured
         if (isApiConfigured()) {
             PlatformFetchResult apiResult = fetchWithWebApi(linkUrl);
-            if (apiResult.isSuccess()) {
+            if (apiResult != null && apiResult.isSuccess()) {
                 return apiResult;
             }
         }
 
-        // 2. Try Spotify oEmbed (Public, No Key)
+        // 3. Fallback: Spotify oEmbed (Public, No Key)
         return fetchWithOEmbed(linkUrl);
+    }
+
+    public PlatformFetchResult fetchFromPublicProfileHtml(String artistId, String linkUrl) {
+        try {
+            String profileUrl = "https://open.spotify.com/artist/" + artistId;
+            String html = restClient.get()
+                    .uri(profileUrl)
+                    .header(HttpHeaders.ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+                    .retrieve()
+                    .body(String.class);
+
+            if (!StringUtils.hasText(html)) {
+                return null;
+            }
+
+            return parseProfilePayload(html, linkUrl, artistId);
+        } catch (Exception e) {
+            log.debug("Spotify public HTML scraping failed for [{}]: {}", linkUrl, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Parses Spotify public artist profile HTML and initialState JSON payload:
+     * Scans all tracks across the artist discography and calculates the true mathematical average play count:
+     * avgStreams = totalStreams / trackCount.
+     */
+    public PlatformFetchResult parseProfilePayload(String html, String linkUrl, String artistId) {
+        if (!StringUtils.hasText(html)) {
+            return null;
+        }
+
+        String payload = html;
+        Matcher stateMatcher = INITIAL_STATE_PATTERN.matcher(html);
+        if (stateMatcher.find()) {
+            try {
+                byte[] decoded = Base64.getDecoder().decode(stateMatcher.group(1).trim());
+                payload = new String(decoded, StandardCharsets.UTF_8);
+            } catch (Exception ignored) {
+            }
+        }
+
+        long totalStreams = 0L;
+        int trackCount = 0;
+        long monthlyListeners = 0L;
+        long followers = 0L;
+        String artistName = null;
+
+        Matcher playMatcher = PLAYCOUNT_PATTERN.matcher(payload);
+        while (playMatcher.find()) {
+            try {
+                long plays = Long.parseLong(playMatcher.group(1));
+                if (plays > 0) {
+                    totalStreams += plays;
+                    trackCount++;
+                }
+            } catch (NumberFormatException ignored) {}
+        }
+
+        Matcher listenersMatcher = MONTHLY_LISTENERS_PATTERN.matcher(payload);
+        if (listenersMatcher.find()) {
+            try {
+                monthlyListeners = Long.parseLong(listenersMatcher.group(1));
+            } catch (NumberFormatException ignored) {}
+        }
+
+        Matcher followersMatcher = FOLLOWERS_PATTERN.matcher(payload);
+        if (followersMatcher.find()) {
+            try {
+                followers = Long.parseLong(followersMatcher.group(1));
+            } catch (NumberFormatException ignored) {}
+        }
+
+        Matcher nameMatcher = ARTIST_NAME_PATTERN.matcher(payload);
+        if (nameMatcher.find()) {
+            artistName = nameMatcher.group(1);
+        }
+
+        if (trackCount > 0 || monthlyListeners > 0 || followers > 0) {
+            long avgStreams = trackCount > 0 ? (totalStreams / trackCount) : 0L;
+            long primaryFollowers = monthlyListeners > 0 ? monthlyListeners : followers;
+
+            PlatformFetchResult result = new PlatformFetchResult();
+            result.setPlatform("Spotify");
+            result.setSource("SPOTIFY_PUBLIC");
+            result.setSuccess(true);
+            result.setChannelTitle(StringUtils.hasText(artistName) ? artistName : "Spotify Artist");
+            result.setTopVideoUrl(linkUrl);
+            result.setTopVideoEmbedUrl("https://open.spotify.com/embed/artist/" + (artistId != null ? artistId : ""));
+            result.setSpotifyAvgStreams(avgStreams);
+            result.setSpotifyTotalStreams(totalStreams);
+            result.setSpotifyTrackCount(trackCount);
+            result.setSpotifyFollowers(primaryFollowers);
+            result.setFollowersCount(primaryFollowers);
+            result.setTotalViews(totalStreams);
+            result.setTopVideoViews(avgStreams);
+            result.setVideoCount(trackCount);
+            return result;
+        }
+
+        return null;
     }
 
     private PlatformFetchResult fetchWithOEmbed(String linkUrl) {
@@ -96,10 +216,9 @@ public class SpotifyPublicClient {
                     iframeUrl = linkUrl.replace("open.spotify.com/", "open.spotify.com/embed/");
                 }
                 result.setTopVideoEmbedUrl(iframeUrl);
-
-                // Spotify public oEmbed does not expose play or view counts. Never fake numbers!
                 result.setTotalViews(0L);
                 result.setTopVideoViews(0L);
+                result.setSpotifyAvgStreams(0L);
                 result.setFollowersCount(0L);
                 result.setVideoCount(0);
                 return result;
@@ -136,7 +255,9 @@ public class SpotifyPublicClient {
             result.setSource("SPOTIFY_API");
             result.setSuccess(true);
             result.setChannelTitle(artistNode.path("name").asText());
-            result.setFollowersCount(artistNode.path("followers").path("total").asLong(0L));
+            long followers = artistNode.path("followers").path("total").asLong(0L);
+            result.setFollowersCount(followers);
+            result.setSpotifyFollowers(followers);
 
             // Get top tracks
             String topTracksUrl = "https://api.spotify.com/v1/artists/" + artistId + "/top-tracks?market=VN";
@@ -156,6 +277,7 @@ public class SpotifyPublicClient {
                 result.setTopVideoThumbnail(topTrack.path("album").path("images").get(0).path("url").asText());
                 result.setTopVideoViews(0L);
                 result.setTotalViews(0L);
+                result.setSpotifyTrackCount(tracksNode.size());
             }
 
             return result;
@@ -194,7 +316,8 @@ public class SpotifyPublicClient {
         }
     }
 
-    private String extractArtistId(String linkUrl) {
+    public static String extractArtistId(String linkUrl) {
+        if (!StringUtils.hasText(linkUrl)) return null;
         Matcher matcher = ARTIST_ID_PATTERN.matcher(linkUrl);
         if (matcher.find()) {
             return matcher.group(1);

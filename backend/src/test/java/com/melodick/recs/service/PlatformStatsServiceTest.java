@@ -41,6 +41,9 @@ class PlatformStatsServiceTest {
     private SpotifyPublicClient spotifyPublicClient;
 
     @Mock
+    private TikTokPublicClient tikTokPublicClient;
+
+    @Mock
     private SoundCloudPublicClient soundCloudPublicClient;
 
     private PlatformStatsService platformStatsService;
@@ -54,6 +57,7 @@ class PlatformStatsServiceTest {
                 youTubeApiClient,
                 youTubePublicScraper,
                 spotifyPublicClient,
+                tikTokPublicClient,
                 soundCloudPublicClient,
                 120
         );
@@ -246,5 +250,139 @@ class PlatformStatsServiceTest {
         assertEquals("999.95M", ArtistStatsResponse.formatMetricCount(999949999L));
         assertEquals("1B", ArtistStatsResponse.formatMetricCount(999950000L));
         assertEquals("14.5B", ArtistStatsResponse.formatMetricCount(14500000000L));
+    }
+
+    @Test
+    void getArtistStats_WithAllThreePlatforms_ReturnsThreeBadges() {
+        Artist tripleArtist = new Artist();
+        tripleArtist.setId(10L);
+        tripleArtist.setName("PHONK_MASTER");
+        tripleArtist.addLink(new ArtistLink("YouTube", "https://youtube.com/@phonkmaster", 1));
+        tripleArtist.addLink(new ArtistLink("Spotify", "https://open.spotify.com/artist/phonk123", 2));
+        tripleArtist.addLink(new ArtistLink("TikTok", "https://www.tiktok.com/@phonkmaster", 3));
+
+        when(artistRepository.findById(10L)).thenReturn(Optional.of(tripleArtist));
+        when(statsRepository.findByArtistId(10L)).thenReturn(Optional.empty());
+        when(youTubeApiClient.isConfigured()).thenReturn(false);
+
+        // Mock YouTube result
+        PlatformFetchResult ytResult = new PlatformFetchResult();
+        ytResult.setPlatform("YouTube");
+        ytResult.setSource("YOUTUBE_RSS");
+        ytResult.setTopVideoId("bestPhonkVid");
+        ytResult.setTopVideoTitle("DRIFT KING");
+        ytResult.setTopVideoViews(1500000L); // 1.5M views
+        ytResult.setTopVideoUrl("https://youtube.com/watch?v=bestPhonkVid");
+        ytResult.setTotalViews(3000000L);
+        ytResult.setSuccess(true);
+        when(youTubePublicScraper.fetchStats("https://youtube.com/@phonkmaster")).thenReturn(ytResult);
+
+        // Mock Spotify result: average streams across tracks
+        PlatformFetchResult spResult = new PlatformFetchResult();
+        spResult.setPlatform("Spotify");
+        spResult.setSource("SPOTIFY_PUBLIC");
+        spResult.setSpotifyAvgStreams(85400L); // 85.4K avg streams
+        spResult.setSpotifyTotalStreams(427000L);
+        spResult.setSpotifyTrackCount(5);
+        spResult.setSpotifyFollowers(12000L);
+        spResult.setSuccess(true);
+        when(spotifyPublicClient.fetchStats("https://open.spotify.com/artist/phonk123")).thenReturn(spResult);
+
+        // Mock TikTok result: followers count ("lượt flow")
+        PlatformFetchResult ttResult = new PlatformFetchResult();
+        ttResult.setPlatform("TikTok");
+        ttResult.setSource("TIKTOK_PUBLIC");
+        ttResult.setTiktokFollowers(42800L); // 42.8K followers
+        ttResult.setTiktokLikes(210000L);
+        ttResult.setTiktokHandle("@phonkmaster");
+        ttResult.setSuccess(true);
+        when(tikTokPublicClient.fetchStats("https://www.tiktok.com/@phonkmaster")).thenReturn(ttResult);
+
+        when(statsRepository.save(any(ArtistPlatformStats.class))).thenAnswer(i -> i.getArgument(0));
+
+        ArtistStatsResponse response = platformStatsService.getArtistStats(10L, false);
+
+        assertNotNull(response);
+        assertEquals(3, response.getBadges().size(), "Must generate exactly 3 badges for 3 attached platforms");
+
+        // Verify YouTube badge
+        var ytBadge = response.getBadges().stream().filter(b -> "YouTube".equals(b.getPlatform())).findFirst().orElse(null);
+        assertNotNull(ytBadge);
+        assertEquals(1500000L, ytBadge.getValue());
+        assertEquals("1.5M view", ytBadge.getFormattedBadge());
+
+        // Verify Spotify badge
+        var spBadge = response.getBadges().stream().filter(b -> "Spotify".equals(b.getPlatform())).findFirst().orElse(null);
+        assertNotNull(spBadge);
+        assertEquals(85400L, spBadge.getValue());
+        assertEquals("85.4K nghe TB", spBadge.getFormattedBadge());
+
+        // Verify TikTok badge
+        var ttBadge = response.getBadges().stream().filter(b -> "TikTok".equals(b.getPlatform())).findFirst().orElse(null);
+        assertNotNull(ttBadge);
+        assertEquals(42800L, ttBadge.getValue());
+        assertEquals("42.8K flow", ttBadge.getFormattedBadge());
+    }
+
+    @Test
+    void getArtistStats_WithTwoPlatforms_ReturnsTwoBadges() {
+        Artist dualArtist = new Artist();
+        dualArtist.setId(11L);
+        dualArtist.setName("DUAL_PRODUCER");
+        dualArtist.addLink(new ArtistLink("Spotify", "https://open.spotify.com/artist/dual123", 1));
+        dualArtist.addLink(new ArtistLink("TikTok", "https://www.tiktok.com/@dualtok", 2));
+
+        when(artistRepository.findById(11L)).thenReturn(Optional.of(dualArtist));
+        when(statsRepository.findByArtistId(11L)).thenReturn(Optional.empty());
+
+        PlatformFetchResult spResult = new PlatformFetchResult();
+        spResult.setPlatform("Spotify");
+        spResult.setSource("SPOTIFY_PUBLIC");
+        spResult.setSpotifyAvgStreams(120000L);
+        spResult.setSpotifyTrackCount(10);
+        spResult.setSuccess(true);
+        when(spotifyPublicClient.fetchStats("https://open.spotify.com/artist/dual123")).thenReturn(spResult);
+
+        PlatformFetchResult ttResult = new PlatformFetchResult();
+        ttResult.setPlatform("TikTok");
+        ttResult.setSource("TIKTOK_PUBLIC");
+        ttResult.setTiktokFollowers(65000L);
+        ttResult.setSuccess(true);
+        when(tikTokPublicClient.fetchStats("https://www.tiktok.com/@dualtok")).thenReturn(ttResult);
+
+        when(statsRepository.save(any(ArtistPlatformStats.class))).thenAnswer(i -> i.getArgument(0));
+
+        ArtistStatsResponse response = platformStatsService.getArtistStats(11L, false);
+
+        assertNotNull(response);
+        assertEquals(2, response.getBadges().size(), "Must generate exactly 2 badges when 2 platforms attached");
+        assertEquals("Spotify", response.getBadges().get(0).getPlatform());
+        assertEquals("TikTok", response.getBadges().get(1).getPlatform());
+    }
+
+    @Test
+    void getArtistStats_WithOnePlatform_ReturnsSingleBadge() {
+        Artist singleArtist = new Artist();
+        singleArtist.setId(12L);
+        singleArtist.setName("TIKTOK_STAR");
+        singleArtist.addLink(new ArtistLink("TikTok", "https://www.tiktok.com/@tiktokstar", 1));
+
+        when(artistRepository.findById(12L)).thenReturn(Optional.of(singleArtist));
+        when(statsRepository.findByArtistId(12L)).thenReturn(Optional.empty());
+
+        PlatformFetchResult ttResult = new PlatformFetchResult();
+        ttResult.setPlatform("TikTok");
+        ttResult.setSource("TIKTOK_PUBLIC");
+        ttResult.setTiktokFollowers(184000L);
+        ttResult.setSuccess(true);
+        when(tikTokPublicClient.fetchStats("https://www.tiktok.com/@tiktokstar")).thenReturn(ttResult);
+
+        when(statsRepository.save(any(ArtistPlatformStats.class))).thenAnswer(i -> i.getArgument(0));
+
+        ArtistStatsResponse response = platformStatsService.getArtistStats(12L, false);
+
+        assertNotNull(response);
+        assertEquals(1, response.getBadges().size(), "Must generate exactly 1 badge when 1 platform attached");
+        assertEquals("184K flow", response.getBadges().get(0).getFormattedBadge());
     }
 }

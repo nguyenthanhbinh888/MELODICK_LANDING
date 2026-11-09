@@ -12,6 +12,13 @@ public class PlatformFetchResult {
     private String topVideoThumbnail;
     private Long topVideoViews = 0L;
     private String topVideoEmbedUrl;
+    private Long spotifyAvgStreams = 0L;
+    private Long spotifyTotalStreams = 0L;
+    private Integer spotifyTrackCount = 0;
+    private Long spotifyFollowers = 0L;
+    private Long tiktokFollowers = 0L;
+    private Long tiktokLikes = 0L;
+    private String tiktokHandle;
     private String source = "FALLBACK";
     private boolean success = false;
 
@@ -57,6 +64,27 @@ public class PlatformFetchResult {
 
     public String getTopVideoEmbedUrl() { return topVideoEmbedUrl; }
     public void setTopVideoEmbedUrl(String topVideoEmbedUrl) { this.topVideoEmbedUrl = topVideoEmbedUrl; }
+
+    public Long getSpotifyAvgStreams() { return spotifyAvgStreams != null ? spotifyAvgStreams : 0L; }
+    public void setSpotifyAvgStreams(Long spotifyAvgStreams) { this.spotifyAvgStreams = spotifyAvgStreams; }
+
+    public Long getSpotifyTotalStreams() { return spotifyTotalStreams != null ? spotifyTotalStreams : 0L; }
+    public void setSpotifyTotalStreams(Long spotifyTotalStreams) { this.spotifyTotalStreams = spotifyTotalStreams; }
+
+    public Integer getSpotifyTrackCount() { return spotifyTrackCount != null ? spotifyTrackCount : 0; }
+    public void setSpotifyTrackCount(Integer spotifyTrackCount) { this.spotifyTrackCount = spotifyTrackCount; }
+
+    public Long getSpotifyFollowers() { return spotifyFollowers != null ? spotifyFollowers : 0L; }
+    public void setSpotifyFollowers(Long spotifyFollowers) { this.spotifyFollowers = spotifyFollowers; }
+
+    public Long getTiktokFollowers() { return tiktokFollowers != null ? tiktokFollowers : 0L; }
+    public void setTiktokFollowers(Long tiktokFollowers) { this.tiktokFollowers = tiktokFollowers; }
+
+    public Long getTiktokLikes() { return tiktokLikes != null ? tiktokLikes : 0L; }
+    public void setTiktokLikes(Long tiktokLikes) { this.tiktokLikes = tiktokLikes; }
+
+    public String getTiktokHandle() { return tiktokHandle; }
+    public void setTiktokHandle(String tiktokHandle) { this.tiktokHandle = tiktokHandle; }
 
     public String getSource() { return source; }
     public void setSource(String source) { this.source = source; }

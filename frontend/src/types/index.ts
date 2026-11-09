@@ -19,6 +19,18 @@ export interface TopVideo {
   platform?: string;
 }
 
+export interface PlatformBadge {
+  platform: 'YouTube' | 'Spotify' | 'TikTok' | string;
+  metricType: 'top_views' | 'avg_views' | 'followers';
+  value: number;
+  formattedValue: string;
+  label: string;
+  formattedBadge: string;
+  tooltip: string;
+  url?: string;
+  icon: 'youtube' | 'spotify' | 'tiktok' | string;
+}
+
 export interface ArtistStats {
   artistId?: number;
   artistName?: string;
@@ -28,10 +40,15 @@ export interface ArtistStats {
   formattedViews: string;
   topVideoViews?: number;
   formattedTopVideoViews?: string;
+  spotifyAvgStreams?: number;
+  formattedSpotifyAvgStreams?: string;
+  tiktokFollowers?: number;
+  formattedTikTokFollowers?: string;
   followersCount: number;
   formattedFollowers: string;
   videoCount: number;
   topVideo?: TopVideo;
+  badges?: PlatformBadge[];
   source?: string;
   lastFetchedAt?: string;
 }
