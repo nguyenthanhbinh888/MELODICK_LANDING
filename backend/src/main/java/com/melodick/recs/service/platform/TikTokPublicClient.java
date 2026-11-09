@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
 public class TikTokPublicClient {
 
     private static final Logger log = LoggerFactory.getLogger(TikTokPublicClient.class);
-    private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    private static final String USER_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5 Mobile/15E148 Safari/604.1";
 
     private static final Pattern HANDLE_PATTERN = Pattern.compile("tiktok\\.com\\/@([a-zA-Z0-9_.-]+)");
     private static final Pattern FOLLOWER_COUNT_PATTERN = Pattern.compile("\"(?:followerCount|fans)\"\\s*:\\s*\"?(\\d+)\"?");
@@ -65,16 +65,16 @@ public class TikTokPublicClient {
         String cleanUrl = linkUrl.trim();
         String handle = extractHandle(cleanUrl);
 
-        // 1. Try public profile HTML scraping
+        // 1. Try public profile HTML scraping (mobile user-agent + rehydration JSON)
         PlatformFetchResult htmlResult = fetchFromProfileHtml(cleanUrl, handle);
-        if (htmlResult.isSuccess() && htmlResult.getFollowersCount() > 0) {
+        if (htmlResult.isSuccess()) {
             return htmlResult;
         }
 
         // 2. Try TikTok oEmbed (Official Public Endpoint)
         PlatformFetchResult oembedResult = fetchFromOembed(cleanUrl, handle);
         if (oembedResult.isSuccess()) {
-            if (htmlResult.isSuccess() && htmlResult.getFollowersCount() > 0) {
+            if (htmlResult.isSuccess()) {
                 oembedResult.setFollowersCount(htmlResult.getFollowersCount());
                 oembedResult.setTiktokFollowers(htmlResult.getFollowersCount());
             }
@@ -96,29 +96,62 @@ public class TikTokPublicClient {
                 long followers = 0L;
                 long likes = 0L;
                 String nickname = handle;
+                boolean profileFound = false;
 
-                Matcher followerMatcher = FOLLOWER_COUNT_PATTERN.matcher(html);
-                if (followerMatcher.find()) {
-                    followers = Long.parseLong(followerMatcher.group(1));
-                } else {
-                    Matcher tagMatcher = HTML_FOLLOWER_TAG_PATTERN.matcher(html);
-                    if (tagMatcher.find()) {
-                        followers = parseCompactMetric(tagMatcher.group(1));
+                // Priority 1: Parse __UNIVERSAL_DATA_FOR_REHYDRATION__ JSON block
+                int rehydrationIdx = html.indexOf("__UNIVERSAL_DATA_FOR_REHYDRATION__");
+                if (rehydrationIdx != -1) {
+                    try {
+                        int start = html.indexOf('>', rehydrationIdx);
+                        int end = html.indexOf("</script>", start);
+                        if (start != -1 && end != -1) {
+                            String jsonStr = html.substring(start + 1, end).trim();
+                            JsonNode root = objectMapper.readTree(jsonStr);
+                            JsonNode userInfo = root.path("__DEFAULT_SCOPE__").path("webapp.user-detail").path("userInfo");
+                            if (!userInfo.isMissingNode() && !userInfo.isNull()) {
+                                JsonNode statsNode = userInfo.path("stats");
+                                followers = statsNode.path("followerCount").asLong(0L);
+                                likes = statsNode.path("heartCount").asLong(statsNode.path("heart").asLong(0L));
+                                String nick = userInfo.path("user").path("nickname").asText("");
+                                if (StringUtils.hasText(nick)) {
+                                    nickname = nick;
+                                }
+                                profileFound = true;
+                            }
+                        }
+                    } catch (Exception parseEx) {
+                        log.debug("Failed parsing __UNIVERSAL_DATA_FOR_REHYDRATION__ for [{}]: {}", cleanUrl, parseEx.getMessage());
                     }
                 }
 
-                Matcher heartMatcher = HEART_COUNT_PATTERN.matcher(html);
-                if (heartMatcher.find()) {
-                    String g = heartMatcher.group(1) != null ? heartMatcher.group(1) : heartMatcher.group(2);
-                    likes = Long.parseLong(g);
+                // Priority 2: Fallback regex matching on HTML patterns
+                if (!profileFound) {
+                    Matcher followerMatcher = FOLLOWER_COUNT_PATTERN.matcher(html);
+                    if (followerMatcher.find()) {
+                        followers = Long.parseLong(followerMatcher.group(1));
+                        profileFound = true;
+                    } else {
+                        Matcher tagMatcher = HTML_FOLLOWER_TAG_PATTERN.matcher(html);
+                        if (tagMatcher.find()) {
+                            followers = parseCompactMetric(tagMatcher.group(1));
+                            profileFound = true;
+                        }
+                    }
+
+                    Matcher heartMatcher = HEART_COUNT_PATTERN.matcher(html);
+                    if (heartMatcher.find()) {
+                        String g = heartMatcher.group(1) != null ? heartMatcher.group(1) : heartMatcher.group(2);
+                        likes = Long.parseLong(g);
+                    }
+
+                    Matcher nickMatcher = NICKNAME_PATTERN.matcher(html);
+                    if (nickMatcher.find()) {
+                        nickname = nickMatcher.group(1);
+                        profileFound = true;
+                    }
                 }
 
-                Matcher nickMatcher = NICKNAME_PATTERN.matcher(html);
-                if (nickMatcher.find()) {
-                    nickname = nickMatcher.group(1);
-                }
-
-                if (followers > 0 || StringUtils.hasText(nickname)) {
+                if (profileFound || StringUtils.hasText(nickname)) {
                     PlatformFetchResult result = new PlatformFetchResult();
                     result.setPlatform("TikTok");
                     result.setSource("TIKTOK_PUBLIC");

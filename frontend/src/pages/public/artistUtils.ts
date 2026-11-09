@@ -177,10 +177,11 @@ export const resolveCardBadges = (
   }
 
   // 3. TikTok Metric: Followers count ("lượt flow")
-  // Must have an attached TikTok link AND verified follower count > 0
+  // Must have an attached TikTok link AND verified follower count >= 0
   const ttUrl = findLinkUrl('tiktok');
-  const tiktokFollowers = stats?.tiktokFollowers ?? 0;
-  if (Boolean(ttUrl) && tiktokFollowers > 0) {
+  const hasTtStat = typeof stats?.tiktokFollowers === 'number' && stats.tiktokFollowers >= 0;
+  if (Boolean(ttUrl) && hasTtStat) {
+    const tiktokFollowers = stats!.tiktokFollowers!;
     const valStr = formatCompactMetric(tiktokFollowers);
     const badgeText = `${valStr} flow`;
     const tooltip = `Lượt flow TikTok: ${tiktokFollowers.toLocaleString()} người theo dõi`;

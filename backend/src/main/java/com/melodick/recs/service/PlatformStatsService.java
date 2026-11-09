@@ -392,7 +392,7 @@ public class PlatformStatsService {
         // TikTok metrics
         Long ttFollowers = entity.getTiktokFollowers();
         res.setTiktokFollowers(ttFollowers != null ? ttFollowers : 0L);
-        if (ttFollowers != null && ttFollowers > 0) {
+        if (ttFollowers != null && ttFollowers >= 0) {
             res.setFormattedTikTokFollowers(ArtistStatsResponse.formatMetricCount(ttFollowers) + " flow");
         } else {
             res.setFormattedTikTokFollowers(null);
@@ -464,7 +464,7 @@ public class PlatformStatsService {
         }
 
         // 3. TikTok Followers Badge ("lượt flow")
-        if (hasTtLink && ttFollowers != null && ttFollowers > 0) {
+        if (hasTtLink && ttFollowers != null && ttFollowers >= 0) {
             String ttUrl = findPlatformUrl(links, "TikTok", null);
             String formattedVal = ArtistStatsResponse.formatMetricCount(ttFollowers);
             String formattedBadge = formattedVal + " flow";

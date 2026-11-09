@@ -385,17 +385,24 @@ export const AdminArtistsPage: React.FC = () => {
                   </td>
                   <td>
                     <div className="admin-stats-cell">
-                      {artist.stats && (artist.stats.totalViews > 0 || artist.stats.topVideo || artist.stats.followersCount > 0) ? (
+                      {artist.stats && (artist.stats.totalViews > 0 || artist.stats.topVideo || artist.stats.followersCount > 0 || (artist.stats.tiktokFollowers != null && artist.stats.tiktokFollowers >= 0)) ? (
                         <div className="admin-stats-info">
                           {artist.stats.totalViews > 0 && (
-                            <span className="admin-views-tag" title={`Tổng lượt xem: ${artist.stats.totalViews.toLocaleString()}`}>
-                              👁️ {artist.stats.formattedViews || `${artist.stats.totalViews.toLocaleString()} views`}
+                            <span className="admin-views-tag" title={`Tổng lượt xem cả kênh: ${artist.stats.totalViews.toLocaleString()}`}>
+                              👁️ Kênh: {artist.stats.formattedViews || `${artist.stats.totalViews.toLocaleString()} views`}
                             </span>
                           )}
                           {artist.stats.topVideo && (
-                            <span className="admin-topvideo-tag" title={artist.stats.topVideo.title}>
+                            <span className="admin-topvideo-tag" title={`Video cao nhất (thẻ người dùng): ${artist.stats.topVideo.title} (${artist.stats.topVideo.viewCount?.toLocaleString() || 0} lượt xem)`}>
                               <Flame size={12} className="admin-flame-icon" />
-                              <span className="admin-topvideo-title">{artist.stats.topVideo.title}</span>
+                              <span className="admin-topvideo-title">
+                                {artist.stats.topVideo.formattedViews ? `${artist.stats.topVideo.formattedViews} • ${artist.stats.topVideo.title}` : artist.stats.topVideo.title}
+                              </span>
+                            </span>
+                          )}
+                          {artist.stats.tiktokFollowers != null && artist.stats.tiktokFollowers >= 0 && (
+                            <span className="admin-followers-tag" title={`Lượt flow TikTok: ${artist.stats.tiktokFollowers.toLocaleString()}`}>
+                              ✦ TikTok: {artist.stats.tiktokFollowers.toLocaleString()} flow
                             </span>
                           )}
                           {artist.stats.followersCount > 0 && (
