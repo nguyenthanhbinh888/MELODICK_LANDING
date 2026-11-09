@@ -512,6 +512,8 @@
   font-weight: 700;
   letter-spacing: 0.4px;
   color: #f4f4f5;
+  text-decoration: none;
+  cursor: pointer;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
@@ -824,6 +826,11 @@
   .badges-count-3 .artist-metric-pill {
     padding: 1.5px 4px;
     font-size: 0.5rem;
+  }
+
+  /* Gracefully hide platform glyph icons on 3 badges in mobile to prevent vinyl center collisions */
+  .badges-count-3 .metric-platform-icon {
+    display: none;
   }
 
   .artist-info-slate {
