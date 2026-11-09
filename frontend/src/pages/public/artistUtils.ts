@@ -50,6 +50,52 @@ export const formatViewCount = (count?: number | null): string => {
   return `${Math.round(count)} lượt xem`;
 };
 
+export interface MetricBadgeItem {
+  platform: 'YouTube' | 'Spotify' | 'TikTok' | string;
+  metricType: 'top_views' | 'avg_views' | 'followers';
+  badgeText: string;
+  tooltip: string;
+  badgeClass: string;
+  dotClass: string;
+  icon: 'youtube' | 'spotify' | 'tiktok' | string;
+  url?: string;
+}
+
+export interface ResolvedBadgesResult {
+  type: 'metrics' | 'platform' | 'none';
+  badges: MetricBadgeItem[];
+  fallbackText?: string;
+  fallbackTooltip?: string;
+  badgeClass?: string;
+  dotClass?: string;
+}
+
+/**
+ * Compact numeric metric formatter (e.g. 1,250,000 -> "1.25M", 42,800 -> "42.8K", 950 -> "950")
+ */
+export const formatCompactMetric = (count?: number | null): string => {
+  if (count == null || !Number.isFinite(count) || count <= 0) return '0';
+  if (count >= 1_000_000_000) {
+    const val = (count / 1_000_000_000).toFixed(2).replace(/\.?0+$/, '');
+    return `${val}B`;
+  }
+  if (count >= 999_950_000) {
+    return '1B';
+  }
+  if (count >= 1_000_000) {
+    const val = (count / 1_000_000).toFixed(2).replace(/\.?0+$/, '');
+    return `${val}M`;
+  }
+  if (count >= 999_950) {
+    return '1M';
+  }
+  if (count >= 1_000) {
+    const val = (count / 1_000).toFixed(1).replace(/\.?0+$/, '');
+    return `${val}K`;
+  }
+  return String(Math.round(count));
+};
+
 export interface CardBadgeResult {
   type: 'views' | 'platform' | 'none';
   text?: string;
@@ -59,11 +105,176 @@ export interface CardBadgeResult {
 }
 
 /**
- * Resolves the top-right header metric pill for an artist card:
- * 1. Strictly the real verified view count of the single highest-viewed video (if views > 0 and video is valid).
- *    Never an average, never a channel total, and NEVER a fake number.
- * 2. Otherwise, clean primary platform badge if artist has valid platform links.
- * 3. Returns { type: 'none' } if no links or views are 0/null (no badge rendered).
+ * Multi-Platform Metric Display Engine:
+ * Resolves 1 of 3, 2 of 3, or all 3 metrics:
+ * 1. YouTube: Real view count of the single highest-viewed video (never average, never fake).
+ * 2. Spotify: Average plays/streams of the artist's discography/tracks.
+ * 3. TikTok: Followers count ("lượt flow" of profile).
+ * If none have metrics: cleanly falls back to platform badge or hides.
+ */
+export const resolveCardBadges = (
+  artist: Artist,
+  validLinks: ArtistLink[] = []
+): ResolvedBadgesResult => {
+  const stats = artist.stats;
+  const badges: MetricBadgeItem[] = [];
+
+  // Helper to find platform link url
+  const findLinkUrl = (platformPattern: string): string | undefined => {
+    const link = validLinks.find((l) =>
+      (l.platform || '').toLowerCase().includes(platformPattern) ||
+      (l.url || '').toLowerCase().includes(platformPattern)
+    );
+    return link?.url;
+  };
+
+  // 1. YouTube Metric: Single highest-viewed video views
+  const ytUrl = findLinkUrl('youtube') || findLinkUrl('youtu.be');
+  const topVideo = stats?.topVideo;
+  const topVideoViews = topVideo?.viewCount ?? stats?.topVideoViews ?? 0;
+  const isSynthetic = Boolean(topVideo?.videoId && isSyntheticVideo(topVideo.videoId));
+  const isYouTubeValid = !isSynthetic && topVideoViews > 0;
+
+  if (isYouTubeValid) {
+    const valStr = formatCompactMetric(topVideoViews);
+    const badgeText =
+      topVideo?.formattedViews ||
+      stats?.formattedTopVideoViews ||
+      `${valStr} view`;
+    const tooltip = topVideo?.title
+      ? `Lượt xem video cao nhất (${topVideo.title}): ${topVideoViews.toLocaleString()} lượt xem`
+      : `Lượt xem video cao nhất: ${topVideoViews.toLocaleString()} lượt xem`;
+
+    badges.push({
+      platform: 'YouTube',
+      metricType: 'top_views',
+      badgeText,
+      tooltip,
+      badgeClass: 'badge-youtube',
+      dotClass: 'dot-youtube',
+      icon: 'youtube',
+      url: topVideo?.url || ytUrl,
+    });
+  }
+
+  // 2. Spotify Metric: Average streams of discography/tracks
+  const spUrl = findLinkUrl('spotify');
+  const spotifyAvg = stats?.spotifyAvgStreams ?? 0;
+  if (spotifyAvg > 0) {
+    const valStr = formatCompactMetric(spotifyAvg);
+    const badgeText = `${valStr} nghe TB`;
+    const tooltip = `Lượt nghe trung bình Spotify: ${spotifyAvg.toLocaleString()} stream/bài`;
+
+    badges.push({
+      platform: 'Spotify',
+      metricType: 'avg_views',
+      badgeText,
+      tooltip,
+      badgeClass: 'badge-spotify',
+      dotClass: 'dot-spotify',
+      icon: 'spotify',
+      url: spUrl,
+    });
+  }
+
+  // 3. TikTok Metric: Followers count ("lượt flow")
+  const ttUrl = findLinkUrl('tiktok');
+  const tiktokFollowers = stats?.tiktokFollowers ?? 0;
+  if (tiktokFollowers > 0) {
+    const valStr = formatCompactMetric(tiktokFollowers);
+    const badgeText = `${valStr} flow`;
+    const tooltip = `Lượt flow TikTok: ${tiktokFollowers.toLocaleString()} người theo dõi`;
+
+    badges.push({
+      platform: 'TikTok',
+      metricType: 'followers',
+      badgeText,
+      tooltip,
+      badgeClass: 'badge-tiktok',
+      dotClass: 'dot-tiktok',
+      icon: 'tiktok',
+      url: ttUrl,
+    });
+  }
+
+  // If any of the 1, 2, or 3 platform metrics are present
+  if (badges.length > 0) {
+    return {
+      type: 'metrics',
+      badges,
+    };
+  }
+
+  // Fallback: Primary Platform Badge if artist has links
+  if (validLinks.length > 0) {
+    const primaryPlatform = (stats?.platform || validLinks[0].platform || '').trim().toLowerCase();
+
+    if (primaryPlatform.includes('spotify')) {
+      return {
+        type: 'platform',
+        badges: [],
+        fallbackText: 'Spotify Artist',
+        fallbackTooltip: 'Nghệ sĩ trên Spotify',
+        badgeClass: 'spotify-badge',
+        dotClass: 'spotify-dot',
+      };
+    }
+    if (primaryPlatform.includes('soundcloud')) {
+      return {
+        type: 'platform',
+        badges: [],
+        fallbackText: 'SoundCloud Creator',
+        fallbackTooltip: 'Nghệ sĩ trên SoundCloud',
+        badgeClass: 'soundcloud-badge',
+        dotClass: 'soundcloud-dot',
+      };
+    }
+    if (primaryPlatform.includes('youtube')) {
+      return {
+        type: 'platform',
+        badges: [],
+        fallbackText: 'YouTube',
+        fallbackTooltip: 'Kênh YouTube',
+        badgeClass: 'youtube-badge',
+        dotClass: 'youtube-dot',
+      };
+    }
+    if (primaryPlatform.includes('tiktok')) {
+      return {
+        type: 'platform',
+        badges: [],
+        fallbackText: 'TikTok Creator',
+        fallbackTooltip: 'TikTok',
+        badgeClass: 'tiktok-badge',
+        dotClass: 'tiktok-dot',
+      };
+    }
+    if (primaryPlatform.includes('instagram')) {
+      return {
+        type: 'platform',
+        badges: [],
+        fallbackText: 'Instagram',
+        fallbackTooltip: 'Instagram',
+        badgeClass: 'instagram-badge',
+        dotClass: 'instagram-dot',
+      };
+    }
+
+    return {
+      type: 'platform',
+      badges: [],
+      fallbackText: validLinks[0].platform,
+      fallbackTooltip: validLinks[0].platform,
+      badgeClass: 'default-badge',
+      dotClass: 'default-dot',
+    };
+  }
+
+  return { type: 'none', badges: [] };
+};
+
+/**
+ * Backward compatibility wrapper returning single badge result
  */
 export const resolveCardBadge = (artist: Artist, validLinks: ArtistLink[] = []): CardBadgeResult => {
   const stats = artist.stats;
@@ -140,7 +351,6 @@ export const resolveCardBadge = (artist: Artist, validLinks: ArtistLink[] = []):
     };
   }
 
-  // 3. No links or views: return none
   return { type: 'none' };
 };
 

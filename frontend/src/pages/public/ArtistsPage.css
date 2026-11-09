@@ -482,10 +482,126 @@
 }
 
 /* ==========================================================================
-   🏷️ Header Telemetry Metric & Platform Badges
+   🏷️ Header Telemetry Metric & Multi-Platform Badges Engine
    ========================================================================== */
 
-/* Right: Verified Top Video Views Metric Pill (Single Highest-Viewed Video Only) */
+/* Multi-Badge Bar Container: Handles 1 of 3, 2 of 3, or all 3 metrics */
+.artist-badges-bar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  flex-wrap: wrap;
+  max-width: calc(100% - 20px);
+  pointer-events: auto;
+}
+
+.artist-metric-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(10, 10, 14, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 20px;
+  padding: 3px 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #f4f4f5;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.artist-card:hover .artist-metric-pill,
+.artist-card.active-card .artist-metric-pill {
+  transform: translateY(-1.5px);
+}
+
+/* YouTube Top Video Views Metric Badge */
+.artist-metric-pill.badge-youtube {
+  border-color: rgba(239, 68, 68, 0.35);
+}
+.artist-card:hover .artist-metric-pill.badge-youtube {
+  border-color: rgba(239, 68, 68, 0.75);
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.35);
+}
+
+/* Spotify Average Streams Metric Badge */
+.artist-metric-pill.badge-spotify {
+  border-color: rgba(29, 185, 84, 0.35);
+}
+.artist-card:hover .artist-metric-pill.badge-spotify {
+  border-color: rgba(29, 185, 84, 0.75);
+  box-shadow: 0 0 10px rgba(29, 185, 84, 0.35);
+}
+
+/* TikTok Followers ("lượt flow") Metric Badge */
+.artist-metric-pill.badge-tiktok {
+  border-color: rgba(37, 244, 238, 0.35);
+}
+.artist-card:hover .artist-metric-pill.badge-tiktok {
+  border-color: rgba(37, 244, 238, 0.75);
+  box-shadow: 0 0 10px rgba(254, 44, 85, 0.35);
+}
+
+/* Multi-Count Compact Adjustments */
+.badges-count-3 .artist-metric-pill {
+  padding: 2.5px 6px;
+  font-size: 0.61rem;
+  gap: 3px;
+}
+
+/* Platform glyph icons */
+.metric-platform-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.62rem;
+  line-height: 1;
+}
+.badge-youtube .metric-platform-icon {
+  color: #ef4444;
+}
+.badge-spotify .metric-platform-icon {
+  color: #1db954;
+}
+.badge-tiktok .metric-platform-icon {
+  color: #25f4ee;
+}
+
+.metric-pulse-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  animation: viewsPulse 2s infinite ease-in-out;
+}
+
+.metric-pulse-dot.dot-youtube {
+  background: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.9);
+}
+
+.metric-pulse-dot.dot-spotify {
+  background: #1db954;
+  box-shadow: 0 0 6px rgba(29, 185, 84, 0.9);
+}
+
+.metric-pulse-dot.dot-tiktok {
+  background: #25f4ee;
+  box-shadow: 0 0 6px rgba(37, 244, 238, 0.9);
+}
+
+/* Legacy single pill fallback */
 .artist-views-badge {
   position: absolute;
   top: 10px;
@@ -684,6 +800,30 @@
     right: 8px;
     font-size: 0.6rem;
     padding: 3px 8px;
+  }
+
+  .artist-badges-bar {
+    top: 6px;
+    right: 6px;
+    gap: 3px;
+    max-width: calc(100% - 12px);
+  }
+
+  .artist-metric-pill {
+    padding: 2px 5px;
+    font-size: 0.54rem;
+    letter-spacing: 0.2px;
+    gap: 3px;
+  }
+
+  .artist-metric-pill .metric-pulse-dot {
+    width: 4px;
+    height: 4px;
+  }
+
+  .badges-count-3 .artist-metric-pill {
+    padding: 1.5px 4px;
+    font-size: 0.5rem;
   }
 
   .artist-info-slate {

@@ -7,7 +7,9 @@ import {
   getPlatformDockClass,
   getPlatformActionLabel,
   formatViewCount,
+  formatCompactMetric,
   resolveCardBadge,
+  resolveCardBadges,
 } from './artistUtils.ts';
 import type { Artist } from '../../types/index.ts';
 
@@ -332,5 +334,201 @@ assertEqual(badge8.type, 'views', 'Should resolve to views badge when videoId is
 assertEqual(badge8.text, '28K lượt xem');
 
 console.log('✓ resolveCardBadge passed all 8 test scenarios');
+
+// 8. Multi-Platform Metric Display Engine Tests (1 of 3, 2 of 3, 3 of 3)
+console.log('Testing Multi-Platform Metric Engine (resolveCardBadges & formatCompactMetric)...');
+
+// 8a. formatCompactMetric
+assertEqual(formatCompactMetric(1250000), '1.25M');
+assertEqual(formatCompactMetric(42800), '42.8K');
+assertEqual(formatCompactMetric(950), '950');
+assertEqual(formatCompactMetric(2500000000), '2.5B');
+assertEqual(formatCompactMetric(999950), '1M');
+assertEqual(formatCompactMetric(999950000), '1B');
+assertEqual(formatCompactMetric(0), '0');
+assertEqual(formatCompactMetric(null), '0');
+
+// 8b. 1 Platform attached: YouTube only
+const artistOnePlatformYT: Artist = {
+  id: 101,
+  name: 'YouTubeOnly',
+  published: true,
+  displayOrder: 1,
+  links: [{ platform: 'YouTube', url: 'https://youtube.com/@ytonly', displayOrder: 1 }],
+  stats: {
+    platform: 'YouTube',
+    totalViews: 2000000,
+    formattedViews: '2M lượt xem',
+    followersCount: 50000,
+    formattedFollowers: '50K người theo dõi',
+    videoCount: 10,
+    topVideo: {
+      videoId: 'topVidYt',
+      title: 'Solo Drift',
+      viewCount: 1200000,
+    },
+  },
+};
+const res1 = resolveCardBadges(artistOnePlatformYT, artistOnePlatformYT.links);
+assertEqual(res1.type, 'metrics');
+assertEqual(res1.badges.length, 1, '1 platform attached must render exactly 1 badge');
+assertEqual(res1.badges[0].platform, 'YouTube');
+assertEqual(res1.badges[0].badgeText, '1.2M view');
+assertEqual(res1.badges[0].icon, 'youtube');
+
+// 8c. 1 Platform attached: Spotify only (average streams)
+const artistOnePlatformSpotify: Artist = {
+  id: 102,
+  name: 'SpotifyOnly',
+  published: true,
+  displayOrder: 2,
+  links: [{ platform: 'Spotify', url: 'https://open.spotify.com/artist/sponly', displayOrder: 1 }],
+  stats: {
+    platform: 'Spotify',
+    totalViews: 854000,
+    formattedViews: '854K lượt xem',
+    spotifyAvgStreams: 85400,
+    followersCount: 12000,
+    formattedFollowers: '12K người theo dõi',
+    videoCount: 10,
+  },
+};
+const res2 = resolveCardBadges(artistOnePlatformSpotify, artistOnePlatformSpotify.links);
+assertEqual(res2.type, 'metrics');
+assertEqual(res2.badges.length, 1, '1 Spotify platform attached must render exactly 1 badge');
+assertEqual(res2.badges[0].platform, 'Spotify');
+assertEqual(res2.badges[0].badgeText, '85.4K nghe TB');
+assertEqual(res2.badges[0].icon, 'spotify');
+
+// 8d. 1 Platform attached: TikTok only (followers count / "lượt flow")
+const artistOnePlatformTikTok: Artist = {
+  id: 103,
+  name: 'TikTokOnly',
+  published: true,
+  displayOrder: 3,
+  links: [{ platform: 'TikTok', url: 'https://www.tiktok.com/@tiktokonly', displayOrder: 1 }],
+  stats: {
+    platform: 'TikTok',
+    totalViews: 0,
+    formattedViews: '',
+    tiktokFollowers: 42800,
+    followersCount: 42800,
+    formattedFollowers: '42.8K người theo dõi',
+    videoCount: 0,
+  },
+};
+const res3 = resolveCardBadges(artistOnePlatformTikTok, artistOnePlatformTikTok.links);
+assertEqual(res3.type, 'metrics');
+assertEqual(res3.badges.length, 1, '1 TikTok platform attached must render exactly 1 badge');
+assertEqual(res3.badges[0].platform, 'TikTok');
+assertEqual(res3.badges[0].badgeText, '42.8K flow');
+assertEqual(res3.badges[0].icon, 'tiktok');
+
+// 8e. 2 Platforms attached: YouTube + Spotify
+const artistDualYTSpotify: Artist = {
+  id: 104,
+  name: 'DualYTSpotify',
+  published: true,
+  displayOrder: 4,
+  links: [
+    { platform: 'YouTube', url: 'https://youtube.com/@dual', displayOrder: 1 },
+    { platform: 'Spotify', url: 'https://open.spotify.com/artist/dual', displayOrder: 2 },
+  ],
+  stats: {
+    platform: 'YouTube',
+    totalViews: 3000000,
+    formattedViews: '3M lượt xem',
+    followersCount: 60000,
+    formattedFollowers: '60K người theo dõi',
+    videoCount: 15,
+    topVideo: {
+      videoId: 'dualTopVid',
+      title: 'Neon Drift',
+      viewCount: 1500000,
+    },
+    spotifyAvgStreams: 124500,
+  },
+};
+const res4 = resolveCardBadges(artistDualYTSpotify, artistDualYTSpotify.links);
+assertEqual(res4.type, 'metrics');
+assertEqual(res4.badges.length, 2, '2 platforms attached must render exactly 2 badges');
+assertEqual(res4.badges[0].platform, 'YouTube');
+assertEqual(res4.badges[0].badgeText, '1.5M view');
+assertEqual(res4.badges[1].platform, 'Spotify');
+assertEqual(res4.badges[1].badgeText, '124.5K nghe TB');
+
+// 8f. 2 Platforms attached: YouTube + TikTok
+const artistDualYTTikTok: Artist = {
+  id: 105,
+  name: 'DualYTTikTok',
+  published: true,
+  displayOrder: 5,
+  links: [
+    { platform: 'YouTube', url: 'https://youtube.com/@dual2', displayOrder: 1 },
+    { platform: 'TikTok', url: 'https://www.tiktok.com/@dual2', displayOrder: 2 },
+  ],
+  stats: {
+    platform: 'YouTube',
+    totalViews: 1000000,
+    formattedViews: '1M lượt xem',
+    followersCount: 20000,
+    formattedFollowers: '20K người theo dõi',
+    videoCount: 5,
+    topVideo: {
+      videoId: 'vidYTTikTok',
+      title: 'Bass Anthem',
+      viewCount: 680000,
+    },
+    tiktokFollowers: 95400,
+  },
+};
+const res5 = resolveCardBadges(artistDualYTTikTok, artistDualYTTikTok.links);
+assertEqual(res5.type, 'metrics');
+assertEqual(res5.badges.length, 2, '2 platforms attached must render exactly 2 badges');
+assertEqual(res5.badges[0].platform, 'YouTube');
+assertEqual(res5.badges[0].badgeText, '680K view');
+assertEqual(res5.badges[1].platform, 'TikTok');
+assertEqual(res5.badges[1].badgeText, '95.4K flow');
+
+// 8g. 3 Platforms attached: ALL THREE (YouTube + Spotify + TikTok)
+const artistTripleAll: Artist = {
+  id: 106,
+  name: 'TripleAllStars',
+  published: true,
+  displayOrder: 6,
+  links: [
+    { platform: 'YouTube', url: 'https://youtube.com/@triple', displayOrder: 1 },
+    { platform: 'Spotify', url: 'https://open.spotify.com/artist/triple', displayOrder: 2 },
+    { platform: 'TikTok', url: 'https://www.tiktok.com/@triple', displayOrder: 3 },
+  ],
+  stats: {
+    platform: 'YouTube',
+    totalViews: 5000000,
+    formattedViews: '5M lượt xem',
+    followersCount: 150000,
+    formattedFollowers: '150K người theo dõi',
+    videoCount: 25,
+    topVideo: {
+      videoId: 'superHitVid',
+      title: 'SUPER HIT 2.0',
+      viewCount: 2400000,
+    },
+    spotifyAvgStreams: 175000,
+    tiktokFollowers: 320000,
+  },
+};
+const res6 = resolveCardBadges(artistTripleAll, artistTripleAll.links);
+assertEqual(res6.type, 'metrics');
+assertEqual(res6.badges.length, 3, 'All 3 platforms attached must render all 3 badges harmoniously');
+assertEqual(res6.badges[0].platform, 'YouTube');
+assertEqual(res6.badges[0].badgeText, '2.4M view');
+assertEqual(res6.badges[1].platform, 'Spotify');
+assertEqual(res6.badges[1].badgeText, '175K nghe TB');
+assertEqual(res6.badges[2].platform, 'TikTok');
+assertEqual(res6.badges[2].badgeText, '320K flow');
+
+console.log('✓ resolveCardBadges passed all 1, 2, and 3 platform display engine tests');
+
+console.log('🎉 ALL UNIT TESTS PASSED SUCCESSFULLY! 🎉');
 
 console.log('🎉 ALL UNIT TESTS PASSED SUCCESSFULLY! 🎉');

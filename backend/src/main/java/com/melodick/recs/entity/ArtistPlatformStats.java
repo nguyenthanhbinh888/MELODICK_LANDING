@@ -48,6 +48,30 @@ public class ArtistPlatformStats {
     @Column(name = "top_video_embed_url", length = 1000)
     private String topVideoEmbedUrl;
 
+    @Column(name = "spotify_avg_streams", nullable = false)
+    private Long spotifyAvgStreams = 0L;
+
+    @Column(name = "spotify_total_streams", nullable = false)
+    private Long spotifyTotalStreams = 0L;
+
+    @Column(name = "spotify_track_count", nullable = false)
+    private Integer spotifyTrackCount = 0;
+
+    @Column(name = "spotify_followers", nullable = false)
+    private Long spotifyFollowers = 0L;
+
+    @Column(name = "tiktok_followers", nullable = false)
+    private Long tiktokFollowers = 0L;
+
+    @Column(name = "tiktok_likes", nullable = false)
+    private Long tiktokLikes = 0L;
+
+    @Column(name = "tiktok_handle", length = 255)
+    private String tiktokHandle;
+
+    @Column(name = "tiktok_avatar_url", length = 1000)
+    private String tiktokAvatarUrl;
+
     @Column(nullable = false, length = 50)
     private String source = "SCRAPED";
 
@@ -110,6 +134,30 @@ public class ArtistPlatformStats {
 
     public String getTopVideoEmbedUrl() { return topVideoEmbedUrl; }
     public void setTopVideoEmbedUrl(String topVideoEmbedUrl) { this.topVideoEmbedUrl = topVideoEmbedUrl; }
+
+    public Long getSpotifyAvgStreams() { return spotifyAvgStreams != null ? spotifyAvgStreams : 0L; }
+    public void setSpotifyAvgStreams(Long spotifyAvgStreams) { this.spotifyAvgStreams = spotifyAvgStreams; }
+
+    public Long getSpotifyTotalStreams() { return spotifyTotalStreams != null ? spotifyTotalStreams : 0L; }
+    public void setSpotifyTotalStreams(Long spotifyTotalStreams) { this.spotifyTotalStreams = spotifyTotalStreams; }
+
+    public Integer getSpotifyTrackCount() { return spotifyTrackCount != null ? spotifyTrackCount : 0; }
+    public void setSpotifyTrackCount(Integer spotifyTrackCount) { this.spotifyTrackCount = spotifyTrackCount; }
+
+    public Long getSpotifyFollowers() { return spotifyFollowers != null ? spotifyFollowers : 0L; }
+    public void setSpotifyFollowers(Long spotifyFollowers) { this.spotifyFollowers = spotifyFollowers; }
+
+    public Long getTiktokFollowers() { return tiktokFollowers != null ? tiktokFollowers : 0L; }
+    public void setTiktokFollowers(Long tiktokFollowers) { this.tiktokFollowers = tiktokFollowers; }
+
+    public Long getTiktokLikes() { return tiktokLikes != null ? tiktokLikes : 0L; }
+    public void setTiktokLikes(Long tiktokLikes) { this.tiktokLikes = tiktokLikes; }
+
+    public String getTiktokHandle() { return tiktokHandle; }
+    public void setTiktokHandle(String tiktokHandle) { this.tiktokHandle = tiktokHandle; }
+
+    public String getTiktokAvatarUrl() { return tiktokAvatarUrl; }
+    public void setTiktokAvatarUrl(String tiktokAvatarUrl) { this.tiktokAvatarUrl = tiktokAvatarUrl; }
 
     public String getSource() { return source; }
     public void setSource(String source) { this.source = source; }

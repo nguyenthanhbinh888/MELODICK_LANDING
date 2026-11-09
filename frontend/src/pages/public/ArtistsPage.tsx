@@ -7,7 +7,7 @@ import {
   getPlatformDockClass,
   getArtistMonogram,
   getArtistRoleTag,
-  resolveCardBadge,
+  resolveCardBadges,
 } from './artistUtils';
 import './ArtistsPage.css';
 
@@ -337,29 +337,50 @@ export const ArtistsPage: React.FC = () => {
   };
 
   /**
-   * Renders the corner header badge:
-   * 1. Strictly the real verified view count of the single highest-viewed video (if views > 0 and video is valid).
-   *    Never an average, never a channel total, and NEVER a fake number.
-   * 2. Otherwise, if artist has platform links: clean platform badge (e.g. Spotify Artist, SoundCloud Creator).
-   * 3. If no links or 0/null views: null (do not show fake or empty badge).
+   * Multi-Platform Metric Badges Engine:
+   * Displays 1 of 3, 2 of 3, or all 3 metrics:
+   * 1. YouTube: Real view count of the single highest-viewed video (never average, never fake).
+   * 2. Spotify: Average plays/streams across discography/tracks.
+   * 3. TikTok: Followers count ("lượt flow" of profile).
+   * Cleanly falls back to single platform badge or hides if no metrics.
    */
   const renderCardHeaderBadge = (artist: Artist, validLinks: ArtistLink[]) => {
-    const badge = resolveCardBadge(artist, validLinks);
+    const result = resolveCardBadges(artist, validLinks);
 
-    if (badge.type === 'views') {
+    if (result.type === 'metrics' && result.badges.length > 0) {
       return (
-        <div className="artist-views-badge" title={badge.tooltip}>
-          <span className="views-pulse-dot" />
-          <span className="views-count-text">{badge.text}</span>
+        <div
+          className={`artist-badges-bar badges-count-${result.badges.length}`}
+          role="group"
+          aria-label={`Thống kê của ${artist.name}`}
+        >
+          {result.badges.map((b, idx) => (
+            <div
+              key={`${b.platform}-${idx}`}
+              className={`artist-metric-pill ${b.badgeClass}`}
+              title={b.tooltip}
+            >
+              <span className={`metric-pulse-dot ${b.dotClass}`} aria-hidden="true" />
+              <span className="metric-platform-icon" aria-hidden="true">
+                {b.icon === 'youtube' && <span className="icon-glyph">▶</span>}
+                {b.icon === 'spotify' && <span className="icon-glyph">🎵</span>}
+                {b.icon === 'tiktok' && <span className="icon-glyph">✦</span>}
+              </span>
+              <span className="metric-count-text">{b.badgeText}</span>
+            </div>
+          ))}
         </div>
       );
     }
 
-    if (badge.type === 'platform') {
+    if (result.type === 'platform') {
       return (
-        <div className={`artist-platform-badge ${badge.badgeClass}`} title={badge.tooltip}>
-          <span className={`platform-dot ${badge.dotClass}`} />
-          <span className="platform-badge-text">{badge.text}</span>
+        <div
+          className={`artist-platform-badge ${result.badgeClass}`}
+          title={result.fallbackTooltip}
+        >
+          <span className={`platform-dot ${result.dotClass}`} />
+          <span className="platform-badge-text">{result.fallbackText}</span>
         </div>
       );
     }

@@ -15,6 +15,11 @@ public class ArtistStatsResponse {
     private String formattedFollowers;
     private Integer videoCount;
     private TopVideoResponse topVideo;
+    private Long spotifyAvgStreams;
+    private String formattedSpotifyAvgStreams;
+    private Long tiktokFollowers;
+    private String formattedTikTokFollowers;
+    private java.util.List<PlatformBadgeResponse> badges = new java.util.ArrayList<>();
     private String source;
     private LocalDateTime lastFetchedAt;
 
@@ -55,6 +60,21 @@ public class ArtistStatsResponse {
 
     public TopVideoResponse getTopVideo() { return topVideo; }
     public void setTopVideo(TopVideoResponse topVideo) { this.topVideo = topVideo; }
+
+    public Long getSpotifyAvgStreams() { return spotifyAvgStreams; }
+    public void setSpotifyAvgStreams(Long spotifyAvgStreams) { this.spotifyAvgStreams = spotifyAvgStreams; }
+
+    public String getFormattedSpotifyAvgStreams() { return formattedSpotifyAvgStreams; }
+    public void setFormattedSpotifyAvgStreams(String formattedSpotifyAvgStreams) { this.formattedSpotifyAvgStreams = formattedSpotifyAvgStreams; }
+
+    public Long getTiktokFollowers() { return tiktokFollowers; }
+    public void setTiktokFollowers(Long tiktokFollowers) { this.tiktokFollowers = tiktokFollowers; }
+
+    public String getFormattedTikTokFollowers() { return formattedTikTokFollowers; }
+    public void setFormattedTikTokFollowers(String formattedTikTokFollowers) { this.formattedTikTokFollowers = formattedTikTokFollowers; }
+
+    public java.util.List<PlatformBadgeResponse> getBadges() { return badges; }
+    public void setBadges(java.util.List<PlatformBadgeResponse> badges) { this.badges = badges; }
 
     public String getSource() { return source; }
     public void setSource(String source) { this.source = source; }
