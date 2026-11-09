@@ -21,8 +21,8 @@ public class TikTokPublicClient {
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
     private static final Pattern HANDLE_PATTERN = Pattern.compile("tiktok\\.com\\/@([a-zA-Z0-9_.-]+)");
-    private static final Pattern FOLLOWER_COUNT_PATTERN = Pattern.compile("\"followerCount\"\\s*:\\s*(\\d+)");
-    private static final Pattern HEART_COUNT_PATTERN = Pattern.compile("\"heartCount\"\\s*:\\s*(\\d+)|\"heart\"\\s*:\\s*(\\d+)");
+    private static final Pattern FOLLOWER_COUNT_PATTERN = Pattern.compile("\"(?:followerCount|fans)\"\\s*:\\s*\"?(\\d+)\"?");
+    private static final Pattern HEART_COUNT_PATTERN = Pattern.compile("\"heartCount\"\\s*:\\s*\"?(\\d+)\"?|\"heart\"\\s*:\\s*\"?(\\d+)\"?");
     private static final Pattern NICKNAME_PATTERN = Pattern.compile("\"nickname\"\\s*:\\s*\"([^\"]+)\"");
     private static final Pattern HTML_FOLLOWER_TAG_PATTERN = Pattern.compile("data-e2e=[\"']followers-count[\"']>([^<]+)<");
 
@@ -123,7 +123,8 @@ public class TikTokPublicClient {
                     result.setPlatform("TikTok");
                     result.setSource("TIKTOK_PUBLIC");
                     result.setSuccess(true);
-                    result.setChannelTitle(StringUtils.hasText(nickname) ? nickname : handle);
+                    String title = StringUtils.hasText(nickname) ? nickname : (StringUtils.hasText(handle) ? handle : "TikTok Creator");
+                    result.setChannelTitle(title);
                     result.setFollowersCount(followers);
                     result.setTiktokFollowers(followers);
                     result.setTiktokLikes(likes);
@@ -172,11 +173,17 @@ public class TikTokPublicClient {
 
     /**
      * Parses compact metric strings from TikTok HTML tags:
-     * e.g. "12.5K" -> 12500, "1.2M" -> 1200000, "450" -> 450
+     * e.g. "12.5K" -> 12500, "12,5K" -> 12500, "1.2M" -> 1200000, "1,2M" -> 1200000, "450" -> 450
      */
     public static long parseCompactMetric(String text) {
         if (!StringUtils.hasText(text)) return 0L;
-        String clean = text.trim().toUpperCase().replace(",", "");
+        String clean = text.trim().toUpperCase();
+        // If metric uses comma as decimal separator (e.g. "12,5K", "1,2M"), replace comma with dot
+        if (clean.matches(".*\\d+,\\d+[KMB]")) {
+            clean = clean.replace(',', '.');
+        } else {
+            clean = clean.replace(",", "");
+        }
         try {
             if (clean.endsWith("B")) {
                 double num = Double.parseDouble(clean.substring(0, clean.length() - 1));

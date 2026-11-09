@@ -527,6 +527,97 @@ assertEqual(res6.badges[1].badgeText, '175K nghe TB');
 assertEqual(res6.badges[2].platform, 'TikTok');
 assertEqual(res6.badges[2].badgeText, '320K flow');
 
+// 8g2. 2 Platforms attached: Spotify + TikTok (without YouTube)
+const artistDualSpotifyTikTok: Artist = {
+  id: 107,
+  name: 'DualSpotifyTikTok',
+  published: true,
+  displayOrder: 7,
+  links: [
+    { platform: 'Spotify', url: 'https://open.spotify.com/artist/sptok', displayOrder: 1 },
+    { platform: 'TikTok', url: 'https://www.tiktok.com/@sptok', displayOrder: 2 },
+  ],
+  stats: {
+    platform: 'Spotify',
+    totalViews: 0,
+    formattedViews: '',
+    followersCount: 15000,
+    formattedFollowers: '15K người theo dõi',
+    videoCount: 0,
+    spotifyAvgStreams: 92000,
+    tiktokFollowers: 76000,
+  },
+};
+const resDualSpTt = resolveCardBadges(artistDualSpotifyTikTok, artistDualSpotifyTikTok.links);
+assertEqual(resDualSpTt.type, 'metrics');
+assertEqual(resDualSpTt.badges.length, 2, 'Spotify + TikTok attached must render exactly 2 badges');
+assertEqual(resDualSpTt.badges[0].platform, 'Spotify');
+assertEqual(resDualSpTt.badges[0].badgeText, '92K nghe TB');
+assertEqual(resDualSpTt.badges[1].platform, 'TikTok');
+assertEqual(resDualSpTt.badges[1].badgeText, '76K flow');
+
+// 8h. Unlinked platforms MUST NOT be rendered even if stats object has cached data
+const artistOnlyTikTokLinked: Artist = {
+  id: 108,
+  name: 'OnlyTikTokWithOldData',
+  published: true,
+  displayOrder: 8,
+  links: [
+    { platform: 'TikTok', url: 'https://www.tiktok.com/@onlytiktok', displayOrder: 1 },
+  ],
+  stats: {
+    platform: 'TikTok',
+    totalViews: 5000000,
+    formattedViews: '5M lượt xem',
+    followersCount: 88000,
+    formattedFollowers: '88K người theo dõi',
+    videoCount: 20,
+    topVideo: {
+      videoId: 'oldYtVid',
+      title: 'Old YouTube Video',
+      viewCount: 1200000,
+      formattedViews: '1.2M lượt xem',
+    },
+    topVideoViews: 1200000,
+    spotifyAvgStreams: 150000, // Cached old Spotify streams
+    tiktokFollowers: 88000,   // Active TikTok followers
+  },
+};
+const resOnlyTt = resolveCardBadges(artistOnlyTikTokLinked, artistOnlyTikTokLinked.links);
+assertEqual(resOnlyTt.type, 'metrics');
+assertEqual(resOnlyTt.badges.length, 1, 'Only TikTok is linked, must render exactly 1 badge despite old cached YouTube & Spotify stats');
+assertEqual(resOnlyTt.badges[0].platform, 'TikTok');
+assertEqual(resOnlyTt.badges[0].badgeText, '88K flow');
+
+// 8i. YouTube badge text format: must produce compact "1.5M view", NOT "1.5M lượt xem"
+const artistYtBadgeTextFormat: Artist = {
+  id: 109,
+  name: 'YtBadgeTextFormat',
+  published: true,
+  displayOrder: 9,
+  links: [
+    { platform: 'YouTube', url: 'https://youtube.com/@phonk', displayOrder: 1 },
+  ],
+  stats: {
+    platform: 'YouTube',
+    totalViews: 2000000,
+    formattedViews: '2M lượt xem',
+    followersCount: 10000,
+    formattedFollowers: '10K người theo dõi',
+    videoCount: 5,
+    topVideo: {
+      videoId: 'realVid99',
+      title: 'Real Phonk',
+      viewCount: 1500000,
+      formattedViews: '1.5M lượt xem', // Long format from backend
+    },
+    topVideoViews: 1500000,
+    formattedTopVideoViews: '1.5M lượt xem', // Long format from backend
+  },
+};
+const resYtFormat = resolveCardBadges(artistYtBadgeTextFormat, artistYtBadgeTextFormat.links);
+assertEqual(resYtFormat.badges[0].badgeText, '1.5M view', 'YouTube badge text must be compact "1.5M view", NOT "1.5M lượt xem"');
+
 console.log('✓ resolveCardBadges passed all 1, 2, and 3 platform display engine tests');
 
 console.log('🎉 ALL UNIT TESTS PASSED SUCCESSFULLY! 🎉');

@@ -354,21 +354,36 @@ export const ArtistsPage: React.FC = () => {
           role="group"
           aria-label={`Thống kê của ${artist.name}`}
         >
-          {result.badges.map((b, idx) => (
-            <div
-              key={`${b.platform}-${idx}`}
-              className={`artist-metric-pill ${b.badgeClass}`}
-              title={b.tooltip}
-            >
-              <span className={`metric-pulse-dot ${b.dotClass}`} aria-hidden="true" />
-              <span className="metric-platform-icon" aria-hidden="true">
-                {b.icon === 'youtube' && <span className="icon-glyph">▶</span>}
-                {b.icon === 'spotify' && <span className="icon-glyph">🎵</span>}
-                {b.icon === 'tiktok' && <span className="icon-glyph">✦</span>}
-              </span>
-              <span className="metric-count-text">{b.badgeText}</span>
-            </div>
-          ))}
+          {result.badges.map((b, idx) => {
+            const isClickable = Boolean(b.url);
+            const PillTag = isClickable ? 'a' : 'div';
+            const pillProps = isClickable
+              ? {
+                  href: b.url,
+                  target: '_blank',
+                  rel: 'noopener noreferrer',
+                  onClick: (e: React.MouseEvent) => e.stopPropagation(),
+                }
+              : {};
+
+            return (
+              <PillTag
+                key={`${b.platform}-${idx}`}
+                className={`artist-metric-pill ${b.badgeClass}`}
+                title={b.tooltip}
+                aria-label={b.tooltip}
+                {...pillProps}
+              >
+                <span className={`metric-pulse-dot ${b.dotClass}`} aria-hidden="true" />
+                <span className="metric-platform-icon" aria-hidden="true">
+                  {b.icon === 'youtube' && <span className="icon-glyph">▶</span>}
+                  {b.icon === 'spotify' && <span className="icon-glyph">🎵</span>}
+                  {b.icon === 'tiktok' && <span className="icon-glyph">✦</span>}
+                </span>
+                <span className="metric-count-text">{b.badgeText}</span>
+              </PillTag>
+            );
+          })}
         </div>
       );
     }

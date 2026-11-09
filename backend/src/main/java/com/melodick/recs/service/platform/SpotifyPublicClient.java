@@ -29,9 +29,9 @@ public class SpotifyPublicClient {
 
     private static final Pattern ARTIST_ID_PATTERN = Pattern.compile("spotify\\.com\\/artist\\/([a-zA-Z0-9]+)");
     private static final Pattern INITIAL_STATE_PATTERN = Pattern.compile("id=[\"']initialState[\"'][^>]*>([^<]+)<\\/script>");
-    private static final Pattern PLAYCOUNT_PATTERN = Pattern.compile("\"playcount\"\\s*:\\s*\"(\\d+)\"");
-    private static final Pattern FOLLOWERS_PATTERN = Pattern.compile("\"followers\"\\s*:\\s*(\\d+)");
-    private static final Pattern MONTHLY_LISTENERS_PATTERN = Pattern.compile("\"monthlyListeners\"\\s*:\\s*(\\d+)");
+    private static final Pattern PLAYCOUNT_PATTERN = Pattern.compile("\"play[Cc]ount\"\\s*:\\s*\"?(\\d+)\"?");
+    private static final Pattern FOLLOWERS_PATTERN = Pattern.compile("\"(?:followers|totalFollowers)\"\\s*:\\s*\"?(\\d+)\"?");
+    private static final Pattern MONTHLY_LISTENERS_PATTERN = Pattern.compile("\"monthlyListeners\"\\s*:\\s*\"?(\\d+)\"?");
     private static final Pattern ARTIST_NAME_PATTERN = Pattern.compile("\"name\"\\s*:\\s*\"([^\"]+)\"");
 
     private final String clientId;
