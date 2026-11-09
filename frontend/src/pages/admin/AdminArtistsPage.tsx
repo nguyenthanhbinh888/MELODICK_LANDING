@@ -228,17 +228,23 @@ export const AdminArtistsPage: React.FC = () => {
 
     setIsSubmitting(true);
     try {
+      let targetId: number | null = null;
       if (editingArtistId) {
         const updated = await adminArtistsApi.update(editingArtistId, formData);
         setArtists((prev) => prev.map((a) => (a.id === editingArtistId ? updated : a)));
         showNotification('success', `Đã cập nhật nghệ sĩ ${formData.name}`);
+        targetId = editingArtistId;
       } else {
         const created = await adminArtistsApi.create(formData);
         setArtists((prev) => [...prev, created]);
         showNotification('success', `Đã thêm nghệ sĩ mới ${formData.name}`);
+        targetId = created.id;
       }
       handleCloseModal();
       await fetchArtists();
+      if (targetId) {
+        handleRefreshStats(targetId);
+      }
     } catch (err: unknown) {
       showNotification(
         'error',

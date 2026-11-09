@@ -128,6 +128,43 @@ export const resolveCardBadges = (
     return link?.url;
   };
 
+  // Priority 1: If backend pre-calculated badges are present, use them with link validation
+  if (stats?.badges && stats.badges.length > 0) {
+    for (const b of stats.badges) {
+      const pLower = (b.platform || '').toLowerCase();
+      const linkUrl = findLinkUrl(pLower);
+      if (linkUrl) {
+        const platformName: 'YouTube' | 'Spotify' | 'TikTok' = pLower.includes('youtube')
+          ? 'YouTube'
+          : pLower.includes('spotify')
+          ? 'Spotify'
+          : 'TikTok';
+
+        const badgeClass = `badge-${platformName.toLowerCase()}`;
+        const dotClass = `dot-${platformName.toLowerCase()}`;
+        const icon = platformName.toLowerCase() as 'youtube' | 'spotify' | 'tiktok';
+
+        badges.push({
+          platform: platformName,
+          metricType: (b.metricType as 'top_views' | 'avg_views' | 'followers') || 'top_views',
+          badgeText: b.formattedBadge || `${b.formattedValue} ${b.label}`,
+          tooltip: b.tooltip,
+          badgeClass,
+          dotClass,
+          icon,
+          url: b.url || linkUrl,
+        });
+      }
+    }
+
+    if (badges.length > 0) {
+      return {
+        type: 'metrics',
+        badges,
+      };
+    }
+  }
+
   // 1. YouTube Metric: Single highest-viewed video views
   // Must have an attached YouTube link AND verified non-synthetic top video views > 0
   const ytUrl = findLinkUrl('youtube') || findLinkUrl('youtu.be');
