@@ -244,10 +244,8 @@ public class PlatformStatsService {
                     ((ttResult != null && ttResult.isSuccess() && !"FALLBACK".equalsIgnoreCase(ttResult.getSource())) ? ttResult.getSource() : "REAL_MULTI_PLATFORM"));
             entity.setSource(source);
 
-            // Populate YouTube stats if present
+            // 1. YouTube Stats
             if (ytResult != null && ytResult.isSuccess()) {
-                entity.setPlatform(ytResult.getPlatform());
-                entity.setChannelTitle(ytResult.getChannelTitle());
                 entity.setTotalViews(ytResult.getTotalViews());
                 entity.setFollowersCount(ytResult.getFollowersCount());
                 entity.setVideoCount(ytResult.getVideoCount());
@@ -257,16 +255,20 @@ public class PlatformStatsService {
                 entity.setTopVideoThumbnail(ytResult.getTopVideoThumbnail());
                 entity.setTopVideoViews(ytResult.getTopVideoViews());
                 entity.setTopVideoEmbedUrl(ytResult.getTopVideoEmbedUrl());
+            } else if (ytLink.isEmpty()) {
+                // Clear stale YouTube stats if unlinked
+                entity.setTotalViews(0L);
+                entity.setVideoCount(0);
+                entity.setTopVideoId(null);
+                entity.setTopVideoTitle(null);
+                entity.setTopVideoUrl(null);
+                entity.setTopVideoThumbnail(null);
+                entity.setTopVideoViews(0L);
+                entity.setTopVideoEmbedUrl(null);
             }
 
-            // Populate Spotify stats if present
+            // 2. Spotify Stats
             if (spResult != null && spResult.isSuccess()) {
-                if (!StringUtils.hasText(entity.getChannelTitle())) {
-                    entity.setChannelTitle(spResult.getChannelTitle());
-                }
-                if (entity.getPlatform() == null || "FALLBACK".equalsIgnoreCase(entity.getPlatform())) {
-                    entity.setPlatform("Spotify");
-                }
                 entity.setSpotifyAvgStreams(spResult.getSpotifyAvgStreams());
                 entity.setSpotifyTotalStreams(spResult.getSpotifyTotalStreams());
                 entity.setSpotifyTrackCount(spResult.getSpotifyTrackCount());
@@ -275,28 +277,61 @@ public class PlatformStatsService {
                 if (entity.getTopVideoViews() == null || entity.getTopVideoViews() <= 0) {
                     entity.setTopVideoViews(spResult.getSpotifyAvgStreams());
                 }
+            } else if (spLink.isEmpty()) {
+                // Clear stale Spotify stats if unlinked
+                entity.setSpotifyAvgStreams(0L);
+                entity.setSpotifyTotalStreams(0L);
+                entity.setSpotifyTrackCount(0);
+                entity.setSpotifyFollowers(0L);
             }
 
-            // Populate TikTok stats if present
+            // 3. TikTok Stats
             if (ttResult != null && ttResult.isSuccess()) {
-                if (!StringUtils.hasText(entity.getChannelTitle())) {
-                    entity.setChannelTitle(ttResult.getChannelTitle());
-                }
-                if (entity.getPlatform() == null || "FALLBACK".equalsIgnoreCase(entity.getPlatform())) {
-                    entity.setPlatform("TikTok");
-                }
                 long ttFollowers = ttResult.getTiktokFollowers() > 0 ? ttResult.getTiktokFollowers() : ttResult.getFollowersCount();
                 entity.setTiktokFollowers(ttFollowers);
                 entity.setTiktokLikes(ttResult.getTiktokLikes());
                 entity.setTiktokHandle(ttResult.getTiktokHandle());
+            } else if (ttLink.isEmpty()) {
+                // Clear stale TikTok stats if unlinked
+                entity.setTiktokFollowers(0L);
+                entity.setTiktokLikes(0L);
+                entity.setTiktokHandle(null);
             }
 
-            // Populate SoundCloud stats if present and no platform yet
-            if (scResult != null && scResult.isSuccess() && !StringUtils.hasText(entity.getPlatform())) {
-                entity.setPlatform("SoundCloud");
-                entity.setChannelTitle(scResult.getChannelTitle());
+            // 4. SoundCloud Stats
+            if (scResult != null && scResult.isSuccess()) {
                 entity.setFollowersCount(scResult.getFollowersCount());
             }
+
+            // Resolve Primary Platform accurately
+            if (ytResult != null && ytResult.isSuccess()) {
+                entity.setPlatform("YouTube");
+            } else if (spResult != null && spResult.isSuccess()) {
+                entity.setPlatform("Spotify");
+            } else if (ttResult != null && ttResult.isSuccess()) {
+                entity.setPlatform("TikTok");
+            } else if (scResult != null && scResult.isSuccess()) {
+                entity.setPlatform("SoundCloud");
+            } else if (!links.isEmpty() && StringUtils.hasText(links.get(0).getPlatform())) {
+                entity.setPlatform(links.get(0).getPlatform());
+            } else {
+                entity.setPlatform("Artist");
+            }
+
+            // Resolve Channel Title accurately
+            String resolvedTitle = null;
+            if (ytResult != null && ytResult.isSuccess() && StringUtils.hasText(ytResult.getChannelTitle())) {
+                resolvedTitle = ytResult.getChannelTitle();
+            } else if (spResult != null && spResult.isSuccess() && StringUtils.hasText(spResult.getChannelTitle())) {
+                resolvedTitle = spResult.getChannelTitle();
+            } else if (ttResult != null && ttResult.isSuccess() && StringUtils.hasText(ttResult.getChannelTitle())) {
+                resolvedTitle = ttResult.getChannelTitle();
+            } else if (scResult != null && scResult.isSuccess() && StringUtils.hasText(scResult.getChannelTitle())) {
+                resolvedTitle = scResult.getChannelTitle();
+            } else {
+                resolvedTitle = artist.getName();
+            }
+            entity.setChannelTitle(resolvedTitle);
 
             return statsRepository.save(entity);
         } else {
@@ -400,10 +435,16 @@ public class PlatformStatsService {
         }
 
         // Multi-Platform Badges Engine: 1 of 3, 2 of 3, 3 of 3
+        // Badges are ONLY displayed when the corresponding platform link is attached
         List<PlatformBadgeResponse> badges = new ArrayList<>();
 
+        boolean checkLinks = (links != null && !links.isEmpty());
+        boolean hasYtLink = !checkLinks || hasPlatformLink(links, "YouTube", "youtu.be");
+        boolean hasSpLink = !checkLinks || hasPlatformLink(links, "Spotify");
+        boolean hasTtLink = !checkLinks || hasPlatformLink(links, "TikTok");
+
         // 1. YouTube Top Video Views Badge
-        if (isPlayableYouTube && entity.getTopVideoViews() != null && entity.getTopVideoViews() > 0) {
+        if (hasYtLink && isPlayableYouTube && entity.getTopVideoViews() != null && entity.getTopVideoViews() > 0) {
             String ytUrl = findPlatformUrl(links, "YouTube", entity.getTopVideoUrl());
             String formattedVal = ArtistStatsResponse.formatMetricCount(entity.getTopVideoViews());
             String formattedBadge = formattedVal + " view";
@@ -414,7 +455,7 @@ public class PlatformStatsService {
         }
 
         // 2. Spotify Average Streams Badge
-        if (spAvg != null && spAvg > 0) {
+        if (hasSpLink && spAvg != null && spAvg > 0) {
             String spUrl = findPlatformUrl(links, "Spotify", null);
             String formattedVal = ArtistStatsResponse.formatMetricCount(spAvg);
             String formattedBadge = formattedVal + " nghe TB";
@@ -423,7 +464,7 @@ public class PlatformStatsService {
         }
 
         // 3. TikTok Followers Badge ("lượt flow")
-        if (ttFollowers != null && ttFollowers > 0) {
+        if (hasTtLink && ttFollowers != null && ttFollowers > 0) {
             String ttUrl = findPlatformUrl(links, "TikTok", null);
             String formattedVal = ArtistStatsResponse.formatMetricCount(ttFollowers);
             String formattedBadge = formattedVal + " flow";
@@ -435,11 +476,32 @@ public class PlatformStatsService {
         return res;
     }
 
+    private boolean hasPlatformLink(List<ArtistLink> links, String... matchers) {
+        if (links == null || links.isEmpty()) return false;
+        for (ArtistLink link : links) {
+            if (!isUsableLink(link)) continue;
+            String p = link.getPlatform() != null ? link.getPlatform().toLowerCase() : "";
+            String u = link.getUrl() != null ? link.getUrl().toLowerCase() : "";
+            for (String m : matchers) {
+                String target = m.toLowerCase();
+                if (p.contains(target) || u.contains(target)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private String findPlatformUrl(List<ArtistLink> links, String platformName, String fallbackUrl) {
         if (links != null) {
+            String target = platformName.toLowerCase();
             for (ArtistLink l : links) {
-                if (isUsableLink(l) && l.getPlatform() != null && l.getPlatform().equalsIgnoreCase(platformName)) {
-                    return l.getUrl();
+                if (isUsableLink(l)) {
+                    String p = l.getPlatform() != null ? l.getPlatform().toLowerCase() : "";
+                    String u = l.getUrl() != null ? l.getUrl().toLowerCase() : "";
+                    if (p.contains(target) || u.contains(target)) {
+                        return l.getUrl();
+                    }
                 }
             }
         }

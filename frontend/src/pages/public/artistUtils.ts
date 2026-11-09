@@ -129,18 +129,16 @@ export const resolveCardBadges = (
   };
 
   // 1. YouTube Metric: Single highest-viewed video views
+  // Must have an attached YouTube link AND verified non-synthetic top video views > 0
   const ytUrl = findLinkUrl('youtube') || findLinkUrl('youtu.be');
   const topVideo = stats?.topVideo;
   const topVideoViews = topVideo?.viewCount ?? stats?.topVideoViews ?? 0;
   const isSynthetic = Boolean(topVideo?.videoId && isSyntheticVideo(topVideo.videoId));
-  const isYouTubeValid = !isSynthetic && topVideoViews > 0;
+  const isYouTubeValid = Boolean(ytUrl) && !isSynthetic && topVideoViews > 0;
 
   if (isYouTubeValid) {
     const valStr = formatCompactMetric(topVideoViews);
-    const badgeText =
-      topVideo?.formattedViews ||
-      stats?.formattedTopVideoViews ||
-      `${valStr} view`;
+    const badgeText = `${valStr} view`;
     const tooltip = topVideo?.title
       ? `Lượt xem video cao nhất (${topVideo.title}): ${topVideoViews.toLocaleString()} lượt xem`
       : `Lượt xem video cao nhất: ${topVideoViews.toLocaleString()} lượt xem`;
@@ -158,9 +156,10 @@ export const resolveCardBadges = (
   }
 
   // 2. Spotify Metric: Average streams of discography/tracks
+  // Must have an attached Spotify link AND verified average streams > 0
   const spUrl = findLinkUrl('spotify');
   const spotifyAvg = stats?.spotifyAvgStreams ?? 0;
-  if (spotifyAvg > 0) {
+  if (Boolean(spUrl) && spotifyAvg > 0) {
     const valStr = formatCompactMetric(spotifyAvg);
     const badgeText = `${valStr} nghe TB`;
     const tooltip = `Lượt nghe trung bình Spotify: ${spotifyAvg.toLocaleString()} stream/bài`;
@@ -178,9 +177,10 @@ export const resolveCardBadges = (
   }
 
   // 3. TikTok Metric: Followers count ("lượt flow")
+  // Must have an attached TikTok link AND verified follower count > 0
   const ttUrl = findLinkUrl('tiktok');
   const tiktokFollowers = stats?.tiktokFollowers ?? 0;
-  if (tiktokFollowers > 0) {
+  if (Boolean(ttUrl) && tiktokFollowers > 0) {
     const valStr = formatCompactMetric(tiktokFollowers);
     const badgeText = `${valStr} flow`;
     const tooltip = `Lượt flow TikTok: ${tiktokFollowers.toLocaleString()} người theo dõi`;

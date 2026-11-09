@@ -382,7 +382,42 @@ class PlatformStatsServiceTest {
         ArtistStatsResponse response = platformStatsService.getArtistStats(12L, false);
 
         assertNotNull(response);
+        assertEquals("TikTok", response.getPlatform(), "Platform must accurately reflect TikTok, not default to YouTube");
         assertEquals(1, response.getBadges().size(), "Must generate exactly 1 badge when 1 platform attached");
         assertEquals("184K flow", response.getBadges().get(0).getFormattedBadge());
+    }
+
+    @Test
+    void getArtistStats_CachedWithUnlinkedPlatforms_OnlyRendersBadgesForCurrentlyLinkedPlatforms() {
+        // Artist currently ONLY has YouTube linked
+        Artist ytOnlyArtist = new Artist();
+        ytOnlyArtist.setId(15L);
+        ytOnlyArtist.setName("SOLO_YT");
+        ytOnlyArtist.addLink(new ArtistLink("YouTube", "https://youtube.com/@soloyt", 1));
+
+        // DB entity still has old stats for Spotify and TikTok from earlier when those links were attached
+        ArtistPlatformStats cached = new ArtistPlatformStats();
+        cached.setArtist(ytOnlyArtist);
+        cached.setPlatform("YouTube");
+        cached.setChannelTitle("SOLO_YT Channel");
+        cached.setTopVideoId("topVidSolo");
+        cached.setTopVideoTitle("Solo Video");
+        cached.setTopVideoViews(800000L); // 800K
+        cached.setTopVideoUrl("https://youtube.com/watch?v=topVidSolo");
+        cached.setSpotifyAvgStreams(150000L); // Old Spotify stream count
+        cached.setTiktokFollowers(45000L);    // Old TikTok follower count
+        cached.setSource("REAL_MULTI_PLATFORM");
+        cached.setLastFetchedAt(LocalDateTime.now().minusMinutes(10));
+
+        when(artistRepository.findById(15L)).thenReturn(Optional.of(ytOnlyArtist));
+        when(statsRepository.findByArtistId(15L)).thenReturn(Optional.of(cached));
+
+        ArtistStatsResponse response = platformStatsService.getArtistStats(15L, false);
+
+        assertNotNull(response);
+        // CRITICAL CHECK: Badges must ONLY contain YouTube! Unlinked Spotify and TikTok MUST NOT be rendered
+        assertEquals(1, response.getBadges().size(), "Must only render 1 badge because only YouTube is currently linked");
+        assertEquals("YouTube", response.getBadges().get(0).getPlatform());
+        assertEquals("800K view", response.getBadges().get(0).getFormattedBadge());
     }
 }

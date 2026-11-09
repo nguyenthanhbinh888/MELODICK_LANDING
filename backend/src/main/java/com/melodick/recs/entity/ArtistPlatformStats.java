@@ -16,7 +16,7 @@ public class ArtistPlatformStats {
     private Artist artist;
 
     @Column(nullable = false, length = 50)
-    private String platform = "YouTube";
+    private String platform = "Artist";
 
     @Column(name = "channel_title")
     private String channelTitle;

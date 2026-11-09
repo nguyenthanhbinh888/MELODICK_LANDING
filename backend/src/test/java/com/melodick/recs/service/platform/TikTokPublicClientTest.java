@@ -35,7 +35,9 @@ class TikTokPublicClientTest {
     @Test
     void parseCompactMetric_ConvertsFormattedStringsAccurately() {
         assertEquals(42800L, TikTokPublicClient.parseCompactMetric("42.8K"));
+        assertEquals(12500L, TikTokPublicClient.parseCompactMetric("12,5K")); // Vietnamese/European decimal comma
         assertEquals(1200000L, TikTokPublicClient.parseCompactMetric("1.2M"));
+        assertEquals(1200000L, TikTokPublicClient.parseCompactMetric("1,2M")); // Decimal comma
         assertEquals(2500000000L, TikTokPublicClient.parseCompactMetric("2.5B"));
         assertEquals(950L, TikTokPublicClient.parseCompactMetric("950"));
         assertEquals(18500L, TikTokPublicClient.parseCompactMetric("18,500"));
