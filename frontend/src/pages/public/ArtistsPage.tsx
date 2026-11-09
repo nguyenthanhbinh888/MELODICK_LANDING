@@ -374,11 +374,8 @@ export const ArtistsPage: React.FC = () => {
                 aria-label={b.tooltip}
                 {...pillProps}
               >
-                <span className={`metric-pulse-dot ${b.dotClass}`} aria-hidden="true" />
                 <span className="metric-platform-icon" aria-hidden="true">
-                  {b.icon === 'youtube' && <span className="icon-glyph">▶</span>}
-                  {b.icon === 'spotify' && <span className="icon-glyph">🎵</span>}
-                  {b.icon === 'tiktok' && <span className="icon-glyph">✦</span>}
+                  <PlatformIcon platform={b.platform} />
                 </span>
                 <span className="metric-count-text">{b.badgeText}</span>
               </PillTag>
