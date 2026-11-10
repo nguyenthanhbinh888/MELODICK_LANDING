@@ -391,7 +391,7 @@ export const AdminArtistsPage: React.FC = () => {
                   </td>
                   <td>
                     <div className="admin-stats-cell">
-                      {artist.stats && (artist.stats.totalViews > 0 || artist.stats.topVideo || artist.stats.followersCount > 0 || (artist.stats.tiktokFollowers != null && artist.stats.tiktokFollowers >= 0)) ? (
+                      {artist.stats && (artist.stats.totalViews > 0 || artist.stats.topVideo || artist.stats.followersCount > 0 || (artist.stats.tiktokFollowers != null && artist.stats.tiktokFollowers >= 0) || (artist.stats.spotifyAvgStreams != null && artist.stats.spotifyAvgStreams >= 0)) ? (
                         <div className="admin-stats-info">
                           {artist.stats.totalViews > 0 && (
                             <span className="admin-views-tag" title={`Tổng lượt xem cả kênh: ${artist.stats.totalViews.toLocaleString()}`}>
@@ -404,6 +404,11 @@ export const AdminArtistsPage: React.FC = () => {
                               <span className="admin-topvideo-title">
                                 {artist.stats.topVideo.formattedViews ? `${artist.stats.topVideo.formattedViews} • ${artist.stats.topVideo.title}` : artist.stats.topVideo.title}
                               </span>
+                            </span>
+                          )}
+                          {artist.stats.spotifyAvgStreams != null && artist.stats.spotifyAvgStreams >= 0 && (
+                            <span className="admin-followers-tag" title={`Lượt nghe TB Spotify: ${artist.stats.spotifyAvgStreams.toLocaleString()} stream/bài`}>
+                              🎵 Spotify: {artist.stats.formattedSpotifyAvgStreams || `${artist.stats.spotifyAvgStreams.toLocaleString()} nghe TB`}
                             </span>
                           )}
                           {artist.stats.tiktokFollowers != null && artist.stats.tiktokFollowers >= 0 && (

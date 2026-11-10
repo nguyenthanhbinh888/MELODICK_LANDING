@@ -55,4 +55,26 @@ class SpotifyPublicClientTest {
         assertEquals(200000L, result.getSpotifyAvgStreams(), "Average streams should be 600,000 / 3 = 200,000");
         assertEquals(45000L, result.getSpotifyFollowers(), "Monthly listeners should be captured");
     }
+
+    @Test
+    void parseProfilePayload_ExtractsMonthlyListenersFromSsrMetaTags() {
+        String sampleHtml = """
+                <html>
+                <head>
+                  <meta property="og:title" content="MIRAGEMFXNK"/>
+                  <meta property="og:description" content="Artist · 2.4K monthly listeners."/>
+                </head>
+                <body></body>
+                </html>
+                """;
+
+        PlatformFetchResult result = client.parseProfilePayload(sampleHtml, "https://open.spotify.com/artist/067gjS1MId2bQ12TEO6mCx", "067gjS1MId2bQ12TEO6mCx");
+
+        assertNotNull(result);
+        assertTrue(result.isSuccess());
+        assertEquals("Spotify", result.getPlatform());
+        assertEquals("MIRAGEMFXNK", result.getChannelTitle());
+        assertEquals(2400L, result.getSpotifyAvgStreams());
+        assertEquals(2400L, result.getSpotifyFollowers());
+    }
 }
