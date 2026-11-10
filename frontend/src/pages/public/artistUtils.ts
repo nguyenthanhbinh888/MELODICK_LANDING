@@ -193,10 +193,11 @@ export const resolveCardBadges = (
   }
 
   // 2. Spotify Metric: Average streams of discography/tracks
-  // Must have an attached Spotify link AND verified average streams > 0
+  // Must have an attached Spotify link AND verified average streams >= 0
   const spUrl = findLinkUrl('spotify');
-  const spotifyAvg = stats?.spotifyAvgStreams ?? 0;
-  if (Boolean(spUrl) && spotifyAvg > 0) {
+  const hasSpStat = typeof stats?.spotifyAvgStreams === 'number' && stats.spotifyAvgStreams >= 0;
+  if (Boolean(spUrl) && hasSpStat) {
+    const spotifyAvg = stats!.spotifyAvgStreams!;
     const valStr = formatCompactMetric(spotifyAvg);
     const badgeText = `${valStr} nghe TB`;
     const tooltip = `Lượt nghe trung bình Spotify: ${spotifyAvg.toLocaleString()} stream/bài`;

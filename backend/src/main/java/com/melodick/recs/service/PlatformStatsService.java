@@ -383,7 +383,7 @@ public class PlatformStatsService {
         // Spotify metrics
         Long spAvg = entity.getSpotifyAvgStreams();
         res.setSpotifyAvgStreams(spAvg != null ? spAvg : 0L);
-        if (spAvg != null && spAvg > 0) {
+        if (spAvg != null && spAvg >= 0) {
             res.setFormattedSpotifyAvgStreams(ArtistStatsResponse.formatMetricCount(spAvg) + " nghe TB");
         } else {
             res.setFormattedSpotifyAvgStreams(null);
@@ -455,7 +455,7 @@ public class PlatformStatsService {
         }
 
         // 2. Spotify Average Streams Badge
-        if (hasSpLink && spAvg != null && spAvg > 0) {
+        if (hasSpLink && spAvg != null && spAvg >= 0) {
             String spUrl = findPlatformUrl(links, "Spotify", null);
             String formattedVal = ArtistStatsResponse.formatMetricCount(spAvg);
             String formattedBadge = formattedVal + " nghe TB";

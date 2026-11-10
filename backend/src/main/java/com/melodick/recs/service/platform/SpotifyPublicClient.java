@@ -26,6 +26,7 @@ public class SpotifyPublicClient {
 
     private static final Logger log = LoggerFactory.getLogger(SpotifyPublicClient.class);
     private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+    private static final String CRAWLER_USER_AGENT = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
 
     private static final Pattern ARTIST_ID_PATTERN = Pattern.compile("spotify\\.com\\/artist\\/([a-zA-Z0-9]+)");
     private static final Pattern INITIAL_STATE_PATTERN = Pattern.compile("id=[\"']initialState[\"'][^>]*>([^<]+)<\\/script>");
@@ -33,6 +34,8 @@ public class SpotifyPublicClient {
     private static final Pattern FOLLOWERS_PATTERN = Pattern.compile("\"(?:followers|totalFollowers)\"\\s*:\\s*\"?(\\d+)\"?");
     private static final Pattern MONTHLY_LISTENERS_PATTERN = Pattern.compile("\"monthlyListeners\"\\s*:\\s*\"?(\\d+)\"?");
     private static final Pattern ARTIST_NAME_PATTERN = Pattern.compile("\"name\"\\s*:\\s*\"([^\"]+)\"");
+    private static final Pattern OG_LISTENERS_PATTERN = Pattern.compile("([\\d,.]+[KMBkmb]?)\\s+monthly listeners", Pattern.CASE_INSENSITIVE);
+    private static final Pattern OG_TITLE_PATTERN = Pattern.compile("<meta\\s+property=[\"']og:title[\"']\\s+content=[\"']([^\"']+)[\"']", Pattern.CASE_INSENSITIVE);
 
     private final String clientId;
     private final String clientSecret;
@@ -95,25 +98,27 @@ public class SpotifyPublicClient {
             String profileUrl = "https://open.spotify.com/artist/" + artistId;
             String html = restClient.get()
                     .uri(profileUrl)
+                    .header(HttpHeaders.USER_AGENT, CRAWLER_USER_AGENT)
                     .header(HttpHeaders.ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
                     .retrieve()
                     .body(String.class);
 
-            if (!StringUtils.hasText(html)) {
-                return null;
+            if (StringUtils.hasText(html)) {
+                PlatformFetchResult result = parseProfilePayload(html, linkUrl, artistId);
+                if (result != null && result.isSuccess()) {
+                    return result;
+                }
             }
-
-            return parseProfilePayload(html, linkUrl, artistId);
         } catch (Exception e) {
             log.debug("Spotify public HTML scraping failed for [{}]: {}", linkUrl, e.getMessage());
-            return null;
         }
+        return null;
     }
 
     /**
-     * Parses Spotify public artist profile HTML and initialState JSON payload:
-     * Scans all tracks across the artist discography and calculates the true mathematical average play count:
-     * avgStreams = totalStreams / trackCount.
+     * Parses Spotify public artist profile HTML, SSR meta tags, and initialState JSON payload:
+     * Scans tracks across the artist discography and calculates true average stream count:
+     * avgStreams = totalStreams / trackCount (or monthlyListeners when discography total is hidden).
      */
     public PlatformFetchResult parseProfilePayload(String html, String linkUrl, String artistId) {
         if (!StringUtils.hasText(html)) {
@@ -154,6 +159,14 @@ public class SpotifyPublicClient {
             } catch (NumberFormatException ignored) {}
         }
 
+        // Also extract from SSR meta tags (e.g. "Artist · 2.4K monthly listeners.")
+        if (monthlyListeners == 0L) {
+            Matcher ogListenersMatcher = OG_LISTENERS_PATTERN.matcher(html);
+            if (ogListenersMatcher.find()) {
+                monthlyListeners = TikTokPublicClient.parseCompactMetric(ogListenersMatcher.group(1));
+            }
+        }
+
         Matcher followersMatcher = FOLLOWERS_PATTERN.matcher(payload);
         if (followersMatcher.find()) {
             try {
@@ -165,9 +178,15 @@ public class SpotifyPublicClient {
         if (nameMatcher.find()) {
             artistName = nameMatcher.group(1);
         }
+        if (!StringUtils.hasText(artistName)) {
+            Matcher ogTitleMatcher = OG_TITLE_PATTERN.matcher(html);
+            if (ogTitleMatcher.find()) {
+                artistName = ogTitleMatcher.group(1).trim();
+            }
+        }
 
-        if (trackCount > 0 || monthlyListeners > 0 || followers > 0) {
-            long avgStreams = trackCount > 0 ? (totalStreams / trackCount) : 0L;
+        if (trackCount > 0 || monthlyListeners > 0 || followers > 0 || StringUtils.hasText(artistName)) {
+            long avgStreams = trackCount > 0 ? (totalStreams / trackCount) : monthlyListeners;
             long primaryFollowers = monthlyListeners > 0 ? monthlyListeners : followers;
 
             PlatformFetchResult result = new PlatformFetchResult();
@@ -178,11 +197,11 @@ public class SpotifyPublicClient {
             result.setTopVideoUrl(linkUrl);
             result.setTopVideoEmbedUrl("https://open.spotify.com/embed/artist/" + (artistId != null ? artistId : ""));
             result.setSpotifyAvgStreams(avgStreams);
-            result.setSpotifyTotalStreams(totalStreams);
-            result.setSpotifyTrackCount(trackCount);
+            result.setSpotifyTotalStreams(totalStreams > 0 ? totalStreams : monthlyListeners);
+            result.setSpotifyTrackCount(trackCount > 0 ? trackCount : 1);
             result.setSpotifyFollowers(primaryFollowers);
             result.setFollowersCount(primaryFollowers);
-            result.setTotalViews(totalStreams);
+            result.setTotalViews(totalStreams > 0 ? totalStreams : monthlyListeners);
             result.setTopVideoViews(avgStreams);
             result.setVideoCount(trackCount);
             return result;
