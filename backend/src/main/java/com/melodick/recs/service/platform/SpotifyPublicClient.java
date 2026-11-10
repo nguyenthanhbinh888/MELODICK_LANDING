@@ -29,13 +29,18 @@ public class SpotifyPublicClient {
     private static final String CRAWLER_USER_AGENT = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
 
     private static final Pattern ARTIST_ID_PATTERN = Pattern.compile("spotify\\.com\\/artist\\/([a-zA-Z0-9]+)");
-    private static final Pattern INITIAL_STATE_PATTERN = Pattern.compile("id=[\"']initialState[\"'][^>]*>([^<]+)<\\/script>");
+    private static final Pattern INITIAL_STATE_PATTERN = Pattern
+            .compile("id=[\"']initialState[\"'][^>]*>([^<]+)<\\/script>");
     private static final Pattern PLAYCOUNT_PATTERN = Pattern.compile("\"play[Cc]ount\"\\s*:\\s*\"?(\\d+)\"?");
-    private static final Pattern FOLLOWERS_PATTERN = Pattern.compile("\"(?:followers|totalFollowers)\"\\s*:\\s*\"?(\\d+)\"?");
-    private static final Pattern MONTHLY_LISTENERS_PATTERN = Pattern.compile("\"monthlyListeners\"\\s*:\\s*\"?(\\d+)\"?");
+    private static final Pattern FOLLOWERS_PATTERN = Pattern
+            .compile("\"(?:followers|totalFollowers)\"\\s*:\\s*\"?(\\d+)\"?");
+    private static final Pattern MONTHLY_LISTENERS_PATTERN = Pattern
+            .compile("\"monthlyListeners\"\\s*:\\s*\"?(\\d+)\"?");
     private static final Pattern ARTIST_NAME_PATTERN = Pattern.compile("\"name\"\\s*:\\s*\"([^\"]+)\"");
-    private static final Pattern OG_LISTENERS_PATTERN = Pattern.compile("([\\d,.]+[KMBkmb]?)\\s+monthly listeners", Pattern.CASE_INSENSITIVE);
-    private static final Pattern OG_TITLE_PATTERN = Pattern.compile("<meta\\s+property=[\"']og:title[\"']\\s+content=[\"']([^\"']+)[\"']", Pattern.CASE_INSENSITIVE);
+    private static final Pattern OG_LISTENERS_PATTERN = Pattern.compile("([\\d,.]+[KMBkmb]?)\\s+monthly listeners",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern OG_TITLE_PATTERN = Pattern
+            .compile("<meta\\s+property=[\"']og:title[\"']\\s+content=[\"']([^\"']+)[\"']", Pattern.CASE_INSENSITIVE);
 
     private final String clientId;
     private final String clientSecret;
@@ -46,8 +51,8 @@ public class SpotifyPublicClient {
     private Instant tokenExpiresAt = Instant.EPOCH;
 
     public SpotifyPublicClient(@Value("${app.spotify.client-id:}") String clientId,
-                               @Value("${app.spotify.client-secret:}") String clientSecret,
-                               ObjectMapper objectMapper) {
+            @Value("${app.spotify.client-secret:}") String clientSecret,
+            ObjectMapper objectMapper) {
         this.clientId = clientId != null ? clientId.trim() : "";
         this.clientSecret = clientSecret != null ? clientSecret.trim() : "";
         this.objectMapper = objectMapper;
@@ -73,7 +78,8 @@ public class SpotifyPublicClient {
 
         String artistId = extractArtistId(linkUrl);
 
-        // 1. First priority: Public Artist Profile HTML scraper (extracts real track playcounts & calculates discography average)
+        // 1. First priority: Public Artist Profile HTML scraper (extracts real track
+        // playcounts & calculates discography average)
         if (StringUtils.hasText(artistId)) {
             PlatformFetchResult scraperResult = fetchFromPublicProfileHtml(artistId, linkUrl);
             if (scraperResult != null && scraperResult.isSuccess()) {
@@ -116,9 +122,12 @@ public class SpotifyPublicClient {
     }
 
     /**
-     * Parses Spotify public artist profile HTML, SSR meta tags, and initialState JSON payload:
-     * Scans tracks across the artist discography and calculates true average stream count:
-     * avgStreams = totalStreams / trackCount (or monthlyListeners when discography total is hidden).
+     * Parses Spotify public artist profile HTML, SSR meta tags, and initialState
+     * JSON payload:
+     * Scans tracks across the artist discography and calculates true average stream
+     * count:
+     * avgStreams = totalStreams / trackCount (or monthlyListeners when discography
+     * total is hidden).
      */
     public PlatformFetchResult parseProfilePayload(String html, String linkUrl, String artistId) {
         if (!StringUtils.hasText(html)) {
@@ -149,14 +158,16 @@ public class SpotifyPublicClient {
                     totalStreams += plays;
                     trackCount++;
                 }
-            } catch (NumberFormatException ignored) {}
+            } catch (NumberFormatException ignored) {
+            }
         }
 
         Matcher listenersMatcher = MONTHLY_LISTENERS_PATTERN.matcher(payload);
         if (listenersMatcher.find()) {
             try {
                 monthlyListeners = Long.parseLong(listenersMatcher.group(1));
-            } catch (NumberFormatException ignored) {}
+            } catch (NumberFormatException ignored) {
+            }
         }
 
         // Also extract from SSR meta tags (e.g. "Artist · 2.4K monthly listeners.")
@@ -171,7 +182,8 @@ public class SpotifyPublicClient {
         if (followersMatcher.find()) {
             try {
                 followers = Long.parseLong(followersMatcher.group(1));
-            } catch (NumberFormatException ignored) {}
+            } catch (NumberFormatException ignored) {
+            }
         }
 
         Matcher nameMatcher = ARTIST_NAME_PATTERN.matcher(payload);
@@ -312,7 +324,8 @@ public class SpotifyPublicClient {
         }
 
         try {
-            String authHeader = "Basic " + Base64.getEncoder().encodeToString((clientId + ":" + clientSecret).getBytes());
+            String authHeader = "Basic "
+                    + Base64.getEncoder().encodeToString((clientId + ":" + clientSecret).getBytes());
             MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
             formData.add("grant_type", "client_credentials");
 
@@ -336,7 +349,8 @@ public class SpotifyPublicClient {
     }
 
     public static String extractArtistId(String linkUrl) {
-        if (!StringUtils.hasText(linkUrl)) return null;
+        if (!StringUtils.hasText(linkUrl))
+            return null;
         Matcher matcher = ARTIST_ID_PATTERN.matcher(linkUrl);
         if (matcher.find()) {
             return matcher.group(1);
